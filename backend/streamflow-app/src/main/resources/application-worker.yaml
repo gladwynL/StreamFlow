@@ -1,0 +1,15 @@
+# worker role: no API. The embedded server exists only to serve actuator health on 8081.
+server:
+  port: 8081
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 3
+
+management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState, db, kafka

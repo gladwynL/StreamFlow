@@ -1,0 +1,8 @@
+# migrate role: one-shot job without a web server. Flyway migrates on startup (the default
+# strategy); MigrateRunner then provisions Kafka topics and the process exits.
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    hikari:
+      maximum-pool-size: 2

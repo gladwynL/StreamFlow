@@ -1,0 +1,65 @@
+# Settings shared by every role. Role-specific settings live in application-<role>.yaml.
+# Connection settings default to the local Docker Compose stack; containers override them with
+# SPRING_DATASOURCE_* and SPRING_KAFKA_BOOTSTRAP_SERVERS environment variables.
+spring:
+  application:
+    name: streamflow
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:postgresql://localhost:5432/streamflow
+    username: streamflow
+    # No default password: set SPRING_DATASOURCE_PASSWORD (see .env.example).
+    hikari:
+      maximum-pool-size: 4
+      connection-timeout: 5000
+  kafka:
+    bootstrap-servers: localhost:9094
+    admin:
+      fail-fast: false
+  flyway:
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+streamflow:
+  kafka:
+    admin-timeout: 5s
+    topics:
+      events:
+        partitions: 6
+        replication-factor: 1
+        configs:
+          "[cleanup.policy]": delete
+          "[retention.ms]": "86400000"        # 24 h
+          "[retention.bytes]": "1073741824"   # 1 GiB per partition
+          "[segment.bytes]": "134217728"      # 128 MiB
+      dead-letter:
+        partitions: 6                         # same partition number as the source record
+        replication-factor: 1
+        configs:
+          "[cleanup.policy]": delete
+          "[retention.ms]": "604800000"       # 7 days
+          "[retention.bytes]": "268435456"    # 256 MiB per partition
+          "[segment.bytes]": "134217728"      # 128 MiB
+  worker:
+    heartbeat-interval: 5s
+    heartbeat-retention: 24h
+  migrate:
+    kafka-ready-timeout: 60s
+  status:
+    worker-window: 10m
