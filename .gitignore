@@ -1,0 +1,30 @@
+# Local configuration and secrets
+.env
+*.local
+!.env.example
+
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.properties
+*.class
+hs_err_pid*.log
+replay_pid*.log
+
+# Node / frontend
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# IDEs and OS
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Logs and scratch
+*.log
+logs/
