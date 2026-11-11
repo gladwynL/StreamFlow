@@ -35,10 +35,11 @@ class DatabaseOutageIT {
             try (ConfigurableApplicationContext worker = IntegrationTestInfrastructure.startWorker(
                     PIPELINE, "--spring.datasource.hikari.data-source-properties.socketTimeout=3")) {
                 WorkerMetrics metrics = worker.getBean(WorkerMetrics.class);
-                await().atMost(Duration.ofSeconds(60))
-                        .until(() ->
-                                worker.getBean(WorkerMetrics.class).processed.count() >= 1_000);
+                // The consumers' initial joins rebalance the group; measure only after every consumer thread owns
+                // its partitions, so any rebalance counted below happened during the outage.
+                DeadLetterIT.awaitAssignment(worker);
                 double rebalancesBefore = metrics.rebalances();
+                await().atMost(Duration.ofSeconds(60)).until(() -> metrics.processed.count() >= 1_000);
 
                 IntegrationTestInfrastructure.pausePostgres();
                 try {
