@@ -59,6 +59,24 @@ docker compose run --rm --no-deps -e STREAMFLOW_GENERATE_EVENTS=100000 -e STREAM
 The log ends with the run id, producer outcomes, the content hash (equal for equal seeds) and the
 reconciliation verdict. Results are stored in `simulation_runs` and `run_reconciliations`.
 
+### Using the dashboard
+
+Open http://localhost:8080. Sections: **Overview** (throughput, outcomes, latency, workers, trends), **Live
+stream**, **Kafka & processing** (partitions, ownership, lag, workers, retries), **Analytics** (15 min to 24 h, per
+run), **Dead letters** and **Simulations**, plus **System** (Phase 1 status page). The badge in the header shows the
+live feed state: *Live*, *Delayed* (no snapshot for 4 s) or *Reconnecting*; when it is not live, every section keeps
+the last data with a notice saying how old it is.
+
+Reading is open. Starting, stopping or reconciling runs and replaying or discarding dead letters need the operator
+key: set `STREAMFLOW_OPERATOR_KEY` in `.env` (for example `openssl rand -hex 16`), recreate the api
+(`docker compose --profile app up -d api`), then use **Unlock** in the header. The key stays in that tab's memory
+only and is forgotten after 10 minutes without operator actions, on **Lock**, or on reload. Without a configured key
+the api refuses operator actions (503).
+
+Simulations started from the dashboard are bounded (500,000 events, 5,000 events/s, 600 s, 100,000 users) and one
+runs at a time. A run publishes, waits for both consumer groups to drain, then reconciles; the results keep
+publication, processing, duplicates, dead letters and reconciliation separate.
+
 ### Infrastructure in Docker, applications from the IDE or terminal
 
 ```bash
@@ -78,7 +96,8 @@ In PowerShell, set the variables first, e.g. `$env:SPRING_PROFILES_ACTIVE = 'api
 profile (`migrate`, `api`, `worker` or `generate`) must be active or the application refuses to
 start.
 
-Frontend dev server (proxies `/api` to `http://localhost:8080`, override with `STREAMFLOW_API_URL`):
+Frontend dev server (proxies `/api` and the `/ws` live feed to `http://localhost:8080`, override with
+`STREAMFLOW_API_URL`):
 
 ```bash
 cd frontend
@@ -109,6 +128,25 @@ Integration tests start their own Kafka and PostgreSQL containers (one of each f
 Stop the Compose stack first to save memory: `docker compose --profile app down`.
 
 Formatting: `./mvnw spotless:apply` (backend), `npm run format` (frontend).
+
+### End-to-end tests (Playwright)
+
+The end-to-end tests drive Chromium against the real Compose stack. Start it with the e2e overlay, which sets a
+throwaway operator key and lets the worker run the predefined fault scenarios (the tests use one to produce dead
+letters):
+
+```bash
+export STREAMFLOW_E2E_OPERATOR_KEY=$(openssl rand -hex 16)
+docker compose -f compose.yaml -f compose.e2e.yaml --profile app up -d --build --wait
+cd frontend
+npx playwright install chromium     # once
+npm run e2e
+```
+
+PowerShell: `$env:STREAMFLOW_E2E_OPERATOR_KEY = [guid]::NewGuid().ToString('N')`. The suite covers every section
+(axe accessibility scan, no horizontal scroll at 375, 768 and 1440 px), keyboard navigation, reduced motion, the live
+feed cadence and reconnection, a seeded run that must reconcile as PASS, and dead-letter replay and discard. Use `E2E_BASE_URL` to target another address. Stop the stack afterwards
+with the same `-f` options and `down --volumes`.
 
 ## Memory on this laptop
 
@@ -214,3 +252,21 @@ Container memory from `docker stats`, two samples about 1 and 2.5 minutes after 
 The Docker VM process (`vmmemWSL`) used about 1.26 GB of host memory at the second sample. These
 are idle figures from two samples, not load measurements; behaviour under event traffic is
 measured in Phase 5.
+
+### Phase 4 observations under synthetic load (not benchmarks)
+
+Observed 2026-11-11 on the same laptop while verifying the dashboard: the Compose stack with one `worker`
+container (3 consumer threads, one PostgreSQL transaction per record) and the e2e overlay. These are single
+observations taken to check the dashboard, not controlled measurements; Phase 5 benchmarks processing properly.
+
+| Observation | Value |
+|---|---|
+| 240,000-event run at 2,000 events/s requested | published at about 1,590-2,020 records/s; processed about 490-680 events/s while publishing; reconciled PASS (240,000 processed, 0 duplicates) |
+| 90,000-event run at 1,000 events/s requested | processed about 670 events/s while publishing with one dashboard tab open; reconciled PASS |
+| Draining a backlog with no dashboard client connected | about 780-810 events/s (rows in `events` per 10 s); PostgreSQL about 120% CPU, worker about 65%, api under 1% |
+| `GET /api/v1/live` | about 1 s for the first call after start (cold), then 18-30 ms (cached snapshot) |
+| Container memory under that load (`docker stats`) | kafka 438-513 MiB, api 233-253 MiB, worker 249-259 MiB, postgres 76-221 MiB, web 12-15 MiB |
+
+With publication above roughly 700-800 events/s the single worker falls behind, lag grows and processing latency
+reaches the open-ended histogram bucket (over 60 s) until the backlog drains. PostgreSQL CPU is the visible limit;
+whether the per-event latency histogram write added in Phase 4 contributes measurably has not been isolated.

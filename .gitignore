@@ -16,6 +16,9 @@ dist/
 coverage/
 *.tsbuildinfo
 .vite/
+playwright-report/
+test-results/
+blob-report/
 
 # IDEs and OS
 .idea/

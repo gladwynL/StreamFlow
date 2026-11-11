@@ -53,6 +53,20 @@ no Kafka transactions.
 | 23 | Replay and discard require the operator key (503 when not configured, 401 when wrong) and are rate-limited (429) | `OperatorGuardTest` |
 | 24 | Header values that are not printable UTF-8 are stored as Base64, never as text PostgreSQL rejects | `DeadLetterIngestionTest`, `DeadLetterIT` |
 
+## Dashboard and API (Phase 4)
+
+Design rationale: [ADR-0011](adr/0011-dashboard-data-path.md).
+
+| # | Claim | Verified by |
+|---|---|---|
+| 25 | A WebSocket client that stops reading neither delays the snapshot tick nor other clients; it holds at most one snapshot and is disconnected after 5 skipped ticks; a client whose send fails is dropped alone | `LiveBroadcasterTest` |
+| 26 | With a connected client that never reads, a run is still published, processed and reconciled as PASS while a healthy client keeps receiving about one snapshot per second | `DashboardApiIT` |
+| 27 | The live feed pushes about one snapshot per second, refuses origins other than localhost and 127.0.0.1, and refuses clients beyond the limit (close code 1013) | `DashboardApiIT`, `LiveBroadcasterTest` |
+| 28 | Starting a simulation requires the operator key (401 without or with a wrong key) and is bounded (500,000 events, 5,000/s, 600 s, 100,000 users); a second run cannot start while one is in progress (409) | `DashboardApiIT`, `SimulationControllerTest` |
+| 29 | A run started over the API reconciles as PASS and reports its acknowledged, processed and per-type counts exactly; its events page by keyset cursor without gaps or repeats | `DashboardApiIT` |
+| 30 | Latency percentiles are the upper bound of the histogram bucket that contains them; the SQL bucketing matches `LatencyBuckets` | `LatencyBucketsTest`, `LatencyHistogramIT` |
+| 31 | The dashboard shows only values from the API: unmeasured values render as a dash, and the operator key is held in memory only and sent only in the request header | Frontend tests (`OverviewPage`, `OperatorKey`, `DeadLettersPage`, `SimulationsPage`), Playwright `e2e/` |
+
 ## Boundaries of the claims
 
 - **Retry counts are per partition assignment.** Spring Kafka keeps attempt counts in memory. A worker restart or

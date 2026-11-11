@@ -1,9 +1,9 @@
 # StreamFlow
 
-> **Work in progress.** Phases 1–3 of a seven-phase plan are complete: foundations, the event
-> streaming core, and reliability and recovery. The analytics dashboard (Phase 4) and benchmarks
-> (Phase 5) are designed but **not implemented yet**. This README only describes what exists and has
-> been verified.
+> **Work in progress.** Phases 1–4 of a seven-phase plan are complete: foundations, the event
+> streaming core, reliability and recovery, and the API and dashboard. Benchmarks (Phase 5) are
+> designed but **not run yet**, so no performance figures are published. This README only describes
+> what exists and has been verified.
 
 StreamFlow is a real-time distributed event streaming and analytics platform: synthetic e-commerce
 events are published to Apache Kafka and processed by independent workers into PostgreSQL with
@@ -38,16 +38,27 @@ explicit, tested delivery semantics. The design is in
   without ever breaking the deduplication window or deleting unresolved recovery evidence.
 - **Runtime roles** of one Spring Boot 4 application: `migrate` (schema, topics, consumer-group
   offsets), `worker` (processing, dead-letter ingestion, heartbeats), `generate` (one seeded run, then
-  reconcile), `api` (status, dead-letter inspection and replay, retention maintenance).
-- **React dashboard** with one page, System Status, refreshed every 5 seconds from the real API.
-- **Docker Compose** stack and **GitHub Actions CI** that runs every integration test and a Compose
-  smoke test publishing a run that must reconcile as PASS.
+  reconcile), `api` (REST API, live feed, simulations, dead-letter replay, retention maintenance).
+- **Versioned REST API** ([`docs/api.md`](docs/api.md)): live snapshot, paged event history, analytics
+  over 15 minutes to 24 hours, consumer groups and partition lag, workers, simulation runs and
+  dead letters, with RFC 9457 problem responses and capped, indexed queries.
+- **Live feed over WebSocket:** one snapshot per second, computed once whatever the number of
+  clients; a slow browser skips snapshots and is disconnected instead of being waited for, and it
+  never touches Kafka processing (tested with a client that never reads).
+- **React dashboard** with six sections — Overview, Live stream, Kafka & processing, Analytics,
+  Dead letters, Simulations — plus System Status. Every value comes from the backend; unmeasured
+  values show as a dash. Bounded synthetic runs can be started, stopped and reconciled, and dead
+  letters replayed or discarded, behind confirmation dialogs and an operator key held only in
+  memory. Accessible (axe-checked, keyboard, reduced motion) and responsive.
+- **Docker Compose** stack and **GitHub Actions CI** that runs every integration test, a Compose
+  smoke test publishing a run that must reconcile as PASS, and Playwright end-to-end tests of the
+  dashboard against that stack.
 
 ## Stack
 
 Java 21 · Spring Boot 4.1 · Spring for Apache Kafka · Spring JDBC · Flyway · PostgreSQL 18 ·
-Apache Kafka 4.3 (KRaft) · React 19 · TypeScript · Vite · Tailwind CSS · TanStack Query ·
-Testcontainers · Docker Compose · GitHub Actions. Exact versions: [`docs/versions.md`](docs/versions.md).
+Apache Kafka 4.3 (KRaft) · React 19 · TypeScript · Vite · Tailwind CSS · TanStack Query · Recharts ·
+Testcontainers · Playwright · axe-core · Docker Compose · GitHub Actions. Exact versions: [`docs/versions.md`](docs/versions.md).
 
 ## Quick start
 
@@ -59,7 +70,8 @@ docker compose --profile app up -d --build --wait
 docker compose run --rm --no-deps generate    # publish and reconcile a seeded run
 ```
 
-Open http://localhost:8080 for the system status page.
+Open http://localhost:8080 for the dashboard. To start runs or replay dead letters from it, set
+`STREAMFLOW_OPERATOR_KEY` in `.env` first (see the runbook).
 
 ## Repository layout
 
@@ -75,7 +87,8 @@ compose.yaml
 - Per-key order is not preserved for events that are dead-lettered and replayed.
 - Local use only: no user authentication (operator actions need a key); a single Kafka broker with
   replication factor 1.
-- No dashboard for dead letters yet (Phase 4); they are managed through the REST API.
+- At high throughput the live stream view samples the newest events (20 per second); the full
+  history is in the event API and the analytics.
 - No performance figures are published until they are measured (Phase 5).
 
 ## License

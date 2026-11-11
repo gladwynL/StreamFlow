@@ -1,0 +1,12 @@
+# End-to-end test overlay: enables operator actions with a throwaway key and lets the worker run the bounded,
+# predefined fault scenarios (needed to produce dead letters). For tests only; never use it for a normal stack.
+#
+#   STREAMFLOW_E2E_OPERATOR_KEY=$(openssl rand -hex 16) \
+#     docker compose -f compose.yaml -f compose.e2e.yaml --profile app up --detach --build --wait
+services:
+  api:
+    environment:
+      STREAMFLOW_API_OPERATOR_KEY: ${STREAMFLOW_E2E_OPERATOR_KEY:?Set STREAMFLOW_E2E_OPERATOR_KEY for the e2e stack}
+  worker:
+    environment:
+      STREAMFLOW_FAULT_INJECTION_ENABLED: "true"

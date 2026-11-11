@@ -20,6 +20,7 @@ read from the resolved dependency list (`mvnw dependency:list`), not assumed.
 | JUnit Jupiter | 6.0.3 | Boot-managed |
 | AssertJ / Mockito / Awaitility | 3.27.7 / 5.23.0 / 4.3.0 | Boot-managed |
 | Testcontainers | 2.0.5 | Boot-managed |
+| Spring WebSocket (`spring-boot-starter-websocket`) | 7.0.10 | Boot-managed; Phase 4 live feed |
 | ArchUnit | 1.5.1 | `backend/pom.xml` |
 | Spotless Maven plugin / palantir-java-format | 3.11.0 / 2.103.0 | `backend/pom.xml` |
 | JaCoCo | 0.8.16 | `backend/pom.xml` |
@@ -55,6 +56,8 @@ pinning, checked against its peer-dependency ranges.
 | vitest / jsdom | 5.1.0 / 30.1.3 | jsdom requires Node ≥ 24.15 |
 | @testing-library/react / jest-dom / user-event / dom | 16.3.3 / 7.0.1 / 14.6.8 / 10.4.2 | |
 | prettier | 3.9.10 | |
+| recharts / react-is | 3.10.1 / 19.3.1 | Phase 4; `react-is` is a recharts peer dependency |
+| @playwright/test / @axe-core/playwright | 1.64.1 / 4.14.0 | Phase 4; `playwright-core` overridden to 1.64.1 so axe uses the runner's copy |
 
 Dependencies are installed with `npm ci --ignore-scripts`; no install scripts are needed.
 
