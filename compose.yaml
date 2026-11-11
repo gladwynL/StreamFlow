@@ -110,6 +110,8 @@ services:
     environment:
       <<: *app-env
       SPRING_PROFILES_ACTIVE: api
+      # Replay and discard are disabled unless an operator key is set in .env.
+      STREAMFLOW_API_OPERATOR_KEY: ${STREAMFLOW_OPERATOR_KEY:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
