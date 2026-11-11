@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
  * <ol>
  *   <li>creates the daily partitions of the {@code events} table;
  *   <li>provisions the Kafka topics;
- *   <li>gives the processing consumer group an initial offset on every partition (required by
- *       {@code auto.offset.reset=none}).
+ *   <li>gives the processing and dead-letter ingestion consumer groups an initial offset on every partition
+ *       (required by {@code auto.offset.reset=none}).
  * </ol>
  *
  * Kafka may still be starting, so admin timeouts are retried until the ready timeout; specification conflicts fail
@@ -41,6 +41,7 @@ class MigrateRunner implements ApplicationRunner {
     private final PartitionMaintenance partitions;
     private final TopicCatalog catalog;
     private final String consumerGroup;
+    private final String ingestorGroup;
     private final Duration kafkaReadyTimeout;
 
     MigrateRunner(
@@ -54,6 +55,7 @@ class MigrateRunner implements ApplicationRunner {
         this.partitions = partitions;
         this.catalog = catalog;
         this.consumerGroup = properties.worker().consumerGroup();
+        this.ingestorGroup = properties.deadLetters().ingestorGroup();
         this.kafkaReadyTimeout = properties.migrate().kafkaReadyTimeout();
     }
 
@@ -71,6 +73,7 @@ class MigrateRunner implements ApplicationRunner {
                         result.reconfigured(),
                         result.unchanged());
                 groupInitializer.initialize(consumerGroup, catalog.events());
+                groupInitializer.initialize(ingestorGroup, catalog.deadLetter());
                 return;
             } catch (KafkaAdminException e) {
                 if (Instant.now().plus(RETRY_DELAY).isAfter(deadline)) {

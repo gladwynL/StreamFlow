@@ -11,9 +11,11 @@ import io.github.gladwynl.streamflow.kafka.TopicInspector;
 import io.github.gladwynl.streamflow.kafka.TopicSpec;
 import io.github.gladwynl.streamflow.kafka.TopicState;
 import io.github.gladwynl.streamflow.persistence.DatabaseInfoRepository;
+import io.github.gladwynl.streamflow.persistence.DeadLetterRepository;
 import io.github.gladwynl.streamflow.persistence.HeartbeatRepository;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ class SystemStatusService {
     private final TopicCatalog catalog;
     private final DatabaseInfoRepository database;
     private final HeartbeatRepository heartbeats;
+    private final DeadLetterRepository deadLetters;
     private final Duration workerWindow;
     private final Duration workerLiveThreshold;
 
@@ -41,11 +44,13 @@ class SystemStatusService {
             TopicCatalog catalog,
             DatabaseInfoRepository database,
             HeartbeatRepository heartbeats,
+            DeadLetterRepository deadLetters,
             StreamflowProperties properties) {
         this.inspector = inspector;
         this.catalog = catalog;
         this.database = database;
         this.heartbeats = heartbeats;
+        this.deadLetters = deadLetters;
         this.workerWindow = properties.status().workerWindow();
         this.workerLiveThreshold = properties.worker().liveThreshold();
     }
@@ -55,7 +60,20 @@ class SystemStatusService {
         KafkaStatus kafka = kafkaStatus();
         DatabaseStatus databaseStatus = databaseStatus();
         List<WorkerStatus> workers = databaseStatus.reachable() ? workers() : List.of();
-        return SystemStatus.evaluate(checkedAt, kafka, databaseStatus, workers, workerLiveThreshold.toSeconds() + "s");
+        Map<String, Long> deadLetterCounts = databaseStatus.reachable() ? deadLetterCounts() : Map.of();
+        return SystemStatus.evaluate(
+                checkedAt, kafka, databaseStatus, workers, workerLiveThreshold.toSeconds() + "s", deadLetterCounts);
+    }
+
+    private Map<String, Long> deadLetterCounts() {
+        try {
+            Map<String, Long> counts = new LinkedHashMap<>();
+            deadLetters.countsByStatus().forEach((status, count) -> counts.put(status.name(), count));
+            return counts;
+        } catch (DataAccessException e) {
+            log.warn("Dead-letter count query failed: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     private KafkaStatus kafkaStatus() {

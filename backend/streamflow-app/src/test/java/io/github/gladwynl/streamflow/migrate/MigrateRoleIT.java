@@ -53,7 +53,7 @@ class MigrateRoleIT {
                 .query(String.class)
                 .list();
 
-        assertThat(applied).containsExactly("1", "2");
+        assertThat(applied).containsExactly("1", "2", "3");
         for (String table : List.of(
                 "worker_heartbeats",
                 "simulation_runs",
@@ -74,21 +74,22 @@ class MigrateRoleIT {
 
     @Test
     void createsDailyEventPartitionsAheadOfTime() {
-        long dailyPartitions = jdbc.sql("""
-                        SELECT count(*) FROM pg_inherits i JOIN pg_class c ON c.oid = i.inhrelid
-                        WHERE i.inhparent = 'events'::regclass AND c.relname ~ '^events_[0-9]{8}$'
-                        """).query(Long.class).single();
-        String todayPartition = jdbc.sql("SELECT 'events_' || to_char(now() AT TIME ZONE 'UTC', 'YYYYMMDD')")
-                .query(String.class)
-                .single();
+        // One day back, today and seven days ahead (other tests may add or drop older partitions).
+        List<String> expected = jdbc.sql("""
+                        SELECT 'events_' || to_char(d, 'YYYYMMDD') FROM generate_series(
+                            (now() AT TIME ZONE 'UTC')::date - 1, (now() AT TIME ZONE 'UTC')::date + 7,
+                            interval '1 day') AS d
+                        """).query(String.class).list();
 
-        // One day back, today and seven days ahead.
-        assertThat(dailyPartitions).isEqualTo(9);
-        assertThat(jdbc.sql("SELECT to_regclass(:name) IS NOT NULL")
-                        .param("name", todayPartition)
-                        .query(Boolean.class)
-                        .single())
-                .isTrue();
+        assertThat(expected).hasSize(9);
+        for (String partition : expected) {
+            assertThat(jdbc.sql("SELECT to_regclass(:name) IS NOT NULL")
+                            .param("name", partition)
+                            .query(Boolean.class)
+                            .single())
+                    .as(partition)
+                    .isTrue();
+        }
     }
 
     @Test
@@ -168,9 +169,14 @@ class MigrateRoleIT {
     /** Isolated topics and consumer group, so these runs never touch the shared processing group. */
     private static Map<String, Object> topicNames(String events, String deadLetter) {
         return Map.of(
-                "streamflow.kafka.topics.events.name", events,
-                "streamflow.kafka.topics.dead-letter.name", deadLetter,
-                "streamflow.worker.consumer-group", "it-" + events);
+                "streamflow.kafka.topics.events.name",
+                events,
+                "streamflow.kafka.topics.dead-letter.name",
+                deadLetter,
+                "streamflow.worker.consumer-group",
+                "it-" + events,
+                "streamflow.dead-letters.ingestor-group",
+                "it-" + deadLetter);
     }
 
     private static void assertShape(String topic, int partitions, int replicationFactor) throws Exception {

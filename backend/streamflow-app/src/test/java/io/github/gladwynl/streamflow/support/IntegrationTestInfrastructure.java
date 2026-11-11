@@ -16,6 +16,7 @@ import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -108,18 +109,42 @@ public final class IntegrationTestInfrastructure {
      * (integration tests run after it). Used by the crash tests, which kill that JVM.
      */
     public static List<String> workerProcessCommand(Pipeline pipeline, String... extraArguments) {
+        List<String> args = new ArrayList<>(List.of("--server.port=0"));
+        args.addAll(List.of(extraArguments));
+        return processCommand("worker", pipeline, args);
+    }
+
+    /** The command line of any role in a separate JVM started from the application jar. */
+    public static List<String> processCommand(String role, Pipeline pipeline, List<String> extraArguments) {
         Path jar = Path.of("target", "streamflow-app.jar").toAbsolutePath();
         if (!Files.isRegularFile(jar)) {
             throw new IllegalStateException("Application jar not found at " + jar + "; run mvnw verify");
         }
         Path java = Path.of(System.getProperty("java.home"), "bin", "java");
         List<String> command = new ArrayList<>(List.of(java.toString(), "-Xmx256m", "-jar", jar.toString()));
-        command.add("--spring.profiles.active=worker");
+        command.add("--spring.profiles.active=" + role);
         command.addAll(connectionArguments());
         command.addAll(pipeline.arguments());
-        command.add("--server.port=0");
-        command.addAll(List.of(extraArguments));
+        command.addAll(extraArguments);
         return command;
+    }
+
+    /**
+     * Freezes the PostgreSQL container ({@code docker pause}): open connections hang and new ones time out, as in a
+     * real outage. Always pair with {@link #unpausePostgres()} in a {@code finally} block.
+     */
+    public static void pausePostgres() {
+        DockerClientFactory.instance()
+                .client()
+                .pauseContainerCmd(POSTGRES.getContainerId())
+                .exec();
+    }
+
+    public static void unpausePostgres() {
+        DockerClientFactory.instance()
+                .client()
+                .unpauseContainerCmd(POSTGRES.getContainerId())
+                .exec();
     }
 
     public static Admin newAdmin() {

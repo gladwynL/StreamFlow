@@ -17,8 +17,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  * A record whose event id is already in the ledger changes nothing except the duplicate counter. The transaction has
  * committed when this method returns; the listener container commits the Kafka offset only afterwards (ADR-0005).
  *
- * <p>Decoding and validation failures propagate unchanged. In Phase 2 the container retries every failure without
- * limit, so a record that can never be processed stalls its partition instead of being skipped.
+ * <p>Failures propagate unchanged; the listener container's error handler classifies them ({@link
+ * FailureClassifier}) and retries, dead-letters or waits accordingly.
  */
 @Component
 public class EventProcessor {
@@ -28,21 +28,31 @@ public class EventProcessor {
     private final EventStore store;
     private final TransactionTemplate transaction;
     private final CrashInjector crashInjector;
+    private final FaultInjector faultInjector;
 
     public EventProcessor(
             EventCodec codec,
             EventValidator validator,
             EventStore store,
             PlatformTransactionManager transactionManager,
-            CrashInjector crashInjector) {
+            CrashInjector crashInjector,
+            FaultInjector faultInjector) {
         this.codec = codec;
         this.validator = validator;
         this.store = store;
         this.transaction = new TransactionTemplate(transactionManager);
         this.crashInjector = crashInjector;
+        this.faultInjector = faultInjector;
     }
 
     public ProcessingResult process(ConsumerRecord<String, byte[]> record) {
+        return process(record, 1);
+    }
+
+    /**
+     * @param deliveryAttempt 1 on the first delivery to this consumer, incremented by each in-place retry
+     */
+    public ProcessingResult process(ConsumerRecord<String, byte[]> record, int deliveryAttempt) {
         EventEnvelope event = codec.decode(record.value());
         validator.requireValid(event);
         String payloadJson = codec.encodePayload(event.payload());
@@ -51,6 +61,8 @@ public class EventProcessor {
         ProcessingResult result = transaction.execute(status -> {
             boolean firstDelivery = store.recordInLedger(event, partition, record.offset());
             if (firstDelivery) {
+                // Injected faults roll back the ledger row like any real failure; duplicates are never failed.
+                faultInjector.apply(event, deliveryAttempt);
                 store.insertEvent(
                         event, payloadJson, Instant.ofEpochMilli(record.timestamp()), partition, record.offset());
                 store.addToMinuteStats(event, partition);

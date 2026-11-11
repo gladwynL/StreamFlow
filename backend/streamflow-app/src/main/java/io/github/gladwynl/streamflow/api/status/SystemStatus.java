@@ -4,11 +4,15 @@ import io.github.gladwynl.streamflow.kafka.ConfigDrift;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Response of {@code GET /api/v1/system/status}: real observations of Kafka, PostgreSQL and the workers, plus the
  * issues that make the system degraded. Every value comes from a live check made while answering the request.
+ *
+ * <p>{@code deadLetters} counts dead letters by status (empty when PostgreSQL is unreachable). It is informational:
+ * unresolved dead letters await an operator but do not make the system degraded.
  */
 public record SystemStatus(
         Overall status,
@@ -16,7 +20,8 @@ public record SystemStatus(
         List<String> issues,
         KafkaStatus kafka,
         DatabaseStatus database,
-        List<WorkerStatus> workers) {
+        List<WorkerStatus> workers,
+        Map<String, Long> deadLetters) {
 
     public enum Overall {
         OK,
@@ -29,7 +34,8 @@ public record SystemStatus(
             KafkaStatus kafka,
             DatabaseStatus database,
             List<WorkerStatus> workers,
-            String workerLiveThreshold) {
+            String workerLiveThreshold,
+            Map<String, Long> deadLetters) {
         List<String> issues = new ArrayList<>();
         if (!kafka.reachable()) {
             issues.add("Kafka is unreachable: " + kafka.error());
@@ -57,7 +63,14 @@ public record SystemStatus(
             issues.add("No worker has sent a heartbeat within " + workerLiveThreshold);
         }
         Overall overall = issues.isEmpty() ? Overall.OK : Overall.DEGRADED;
-        return new SystemStatus(overall, checkedAt, List.copyOf(issues), kafka, database, List.copyOf(workers));
+        return new SystemStatus(
+                overall,
+                checkedAt,
+                List.copyOf(issues),
+                kafka,
+                database,
+                List.copyOf(workers),
+                Map.copyOf(deadLetters));
     }
 
     /**

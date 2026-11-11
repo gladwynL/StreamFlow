@@ -15,14 +15,26 @@ class RetentionPolicyCheckTest {
 
     @Test
     void acceptsTheDefaultPolicy() {
-        Retention defaults = new Retention(Duration.ofDays(8), Duration.ofDays(7), Duration.ofDays(1));
+        Retention defaults = new Retention(
+                Duration.ofDays(8),
+                Duration.ofDays(7),
+                Duration.ofDays(1),
+                Duration.ofDays(7),
+                Duration.ofDays(30),
+                Duration.ofDays(14));
 
         assertThatCode(() -> RetentionPolicyCheck.verify(defaults, TOPICS)).doesNotThrowAnyException();
     }
 
     @Test
     void rejectsALedgerShorterThanTheLongestTopicRetentionPlusMargin() {
-        Retention tooShort = new Retention(Duration.ofDays(7), Duration.ofDays(2), Duration.ofDays(1));
+        Retention tooShort = new Retention(
+                Duration.ofDays(7),
+                Duration.ofDays(2),
+                Duration.ofDays(1),
+                Duration.ofDays(7),
+                Duration.ofDays(30),
+                Duration.ofDays(14));
 
         assertThatIllegalStateException()
                 .isThrownBy(() -> RetentionPolicyCheck.verify(tooShort, TOPICS))
@@ -31,7 +43,13 @@ class RetentionPolicyCheckTest {
 
     @Test
     void rejectsALedgerShorterThanTheReplayWindowPlusMargin() {
-        Retention longReplay = new Retention(Duration.ofDays(8), Duration.ofDays(10), Duration.ofDays(1));
+        Retention longReplay = new Retention(
+                Duration.ofDays(8),
+                Duration.ofDays(10),
+                Duration.ofDays(1),
+                Duration.ofDays(7),
+                Duration.ofDays(30),
+                Duration.ofDays(14));
 
         assertThatIllegalStateException()
                 .isThrownBy(() -> RetentionPolicyCheck.verify(longReplay, TOPICS))

@@ -44,7 +44,8 @@ class ConcurrentProcessingIT {
                 new EventValidator(),
                 new EventStore(jdbc),
                 new DataSourceTransactionManager(IntegrationTestInfrastructure.dataSource()),
-                CrashInjector.disabled());
+                CrashInjector.disabled(),
+                FaultInjector.disabled());
         UUID runId = UUID.randomUUID();
         EventContentGenerator generator = new EventContentGenerator(new SimulationSpec(5, EVENTS, 1_000, 100));
         EventIds ids = new EventIds();

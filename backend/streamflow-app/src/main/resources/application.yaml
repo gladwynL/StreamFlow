@@ -13,6 +13,10 @@ spring:
     hikari:
       maximum-pool-size: 4
       connection-timeout: 5000
+      data-source-properties:
+        # An unresponsive database raises a connection error (classified as an infrastructure failure)
+        # instead of blocking a consumer thread indefinitely.
+        socketTimeout: 30
   kafka:
     bootstrap-servers: localhost:9094
     admin:
@@ -29,7 +33,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health, info, metrics
   endpoint:
     health:
       probes:

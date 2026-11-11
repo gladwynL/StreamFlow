@@ -10,6 +10,7 @@ import io.github.gladwynl.streamflow.api.status.SystemStatus.WorkerStatus;
 import io.github.gladwynl.streamflow.kafka.ConfigDrift;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +25,7 @@ class SystemStatusTest {
 
     @Test
     void okWhenEveryCheckPasses() {
-        SystemStatus status = SystemStatus.evaluate(NOW, KAFKA_OK, DATABASE_OK, List.of(LIVE_WORKER), "15s");
+        SystemStatus status = SystemStatus.evaluate(NOW, KAFKA_OK, DATABASE_OK, List.of(LIVE_WORKER), "15s", Map.of());
 
         assertThat(status.status()).isEqualTo(Overall.OK);
         assertThat(status.issues()).isEmpty();
@@ -34,7 +35,7 @@ class SystemStatusTest {
     @Test
     void degradedWhenKafkaIsUnreachable() {
         SystemStatus status = SystemStatus.evaluate(
-                NOW, KafkaStatus.unreachable("timed out"), DATABASE_OK, List.of(LIVE_WORKER), "15s");
+                NOW, KafkaStatus.unreachable("timed out"), DATABASE_OK, List.of(LIVE_WORKER), "15s", Map.of());
 
         assertThat(status.status()).isEqualTo(Overall.DEGRADED);
         assertThat(status.issues()).containsExactly("Kafka is unreachable: timed out");
@@ -58,7 +59,7 @@ class SystemStatusTest {
                                 List.of(new ConfigDrift("retention.ms", "86400000", "1000")))),
                 null);
 
-        SystemStatus status = SystemStatus.evaluate(NOW, kafka, DATABASE_OK, List.of(LIVE_WORKER), "15s");
+        SystemStatus status = SystemStatus.evaluate(NOW, kafka, DATABASE_OK, List.of(LIVE_WORKER), "15s", Map.of());
 
         assertThat(status.status()).isEqualTo(Overall.DEGRADED);
         assertThat(status.issues())
@@ -70,7 +71,7 @@ class SystemStatusTest {
 
     @Test
     void degradedWhenNoWorkerIsLive() {
-        SystemStatus status = SystemStatus.evaluate(NOW, KAFKA_OK, DATABASE_OK, List.of(STALE_WORKER), "15s");
+        SystemStatus status = SystemStatus.evaluate(NOW, KAFKA_OK, DATABASE_OK, List.of(STALE_WORKER), "15s", Map.of());
 
         assertThat(status.issues()).containsExactly("No worker has sent a heartbeat within 15s");
     }
@@ -78,7 +79,7 @@ class SystemStatusTest {
     @Test
     void unreachableDatabaseIsReportedOnceWithoutAWorkerIssue() {
         SystemStatus status = SystemStatus.evaluate(
-                NOW, KAFKA_OK, DatabaseStatus.unreachable("connection refused"), List.of(), "15s");
+                NOW, KAFKA_OK, DatabaseStatus.unreachable("connection refused"), List.of(), "15s", Map.of());
 
         assertThat(status.issues()).containsExactly("PostgreSQL is unreachable: connection refused");
     }
@@ -87,7 +88,7 @@ class SystemStatusTest {
     void degradedWhenSchemaIsNotMigrated() {
         DatabaseStatus unmigrated = new DatabaseStatus(true, "18.6", null, null);
 
-        SystemStatus status = SystemStatus.evaluate(NOW, KAFKA_OK, unmigrated, List.of(LIVE_WORKER), "15s");
+        SystemStatus status = SystemStatus.evaluate(NOW, KAFKA_OK, unmigrated, List.of(LIVE_WORKER), "15s", Map.of());
 
         assertThat(status.issues()).containsExactly("The database schema has not been migrated");
     }

@@ -3,6 +3,7 @@ package io.github.gladwynl.streamflow.processing;
 import io.github.gladwynl.streamflow.config.StreamflowProperties;
 import io.github.gladwynl.streamflow.config.StreamflowProperties.CrashTest.CrashPoint;
 import io.github.gladwynl.streamflow.events.EventEnvelope;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -51,21 +52,33 @@ public class CrashInjector {
 
     /** Called inside the transaction, after every write and before the commit. */
     void beforeCommit(ConsumerRecord<?, ?> record, EventEnvelope event) {
-        maybeCrash(CrashPoint.BEFORE_DB_COMMIT, record, event);
+        maybeCrash(CrashPoint.BEFORE_DB_COMMIT, describe(event.eventId(), record));
     }
 
     /** Called after the commit, before the listener returns (and so before any offset commit). */
     void afterCommit(ConsumerRecord<?, ?> record, EventEnvelope event) {
-        maybeCrash(CrashPoint.AFTER_DB_COMMIT, record, event);
+        maybeCrash(CrashPoint.AFTER_DB_COMMIT, describe(event.eventId(), record));
     }
 
-    private void maybeCrash(CrashPoint at, ConsumerRecord<?, ?> record, EventEnvelope event) {
+    /** Called after the dead-letter record was acknowledged, before the error handler commits the source offset. */
+    public void afterDeadLetterPublished(ConsumerRecord<?, ?> source) {
+        maybeCrash(CrashPoint.AFTER_DLT_PUBLISH, describe(null, source));
+    }
+
+    /** Called after a replayed record was acknowledged, before the dead letter is marked REPLAYED. */
+    public void afterReplayPublished(long deadLetterId, UUID eventId) {
+        maybeCrash(CrashPoint.AFTER_REPLAY_PUBLISH, "deadLetterId=%d eventId=%s".formatted(deadLetterId, eventId));
+    }
+
+    private static String describe(UUID eventId, ConsumerRecord<?, ?> record) {
+        return "eventId=%s partition=%d offset=%d".formatted(eventId, record.partition(), record.offset());
+    }
+
+    private void maybeCrash(CrashPoint at, String details) {
         if (point != at || seen.incrementAndGet() != afterRecords) {
             return;
         }
-        System.out.printf(
-                "%s point=%s eventId=%s partition=%d offset=%d%n",
-                CRASH_MARKER, at, event.eventId(), record.partition(), record.offset());
+        System.out.printf("%s point=%s %s%n", CRASH_MARKER, at, details);
         System.out.flush();
         Runtime.getRuntime().halt(CRASH_EXIT_CODE);
     }

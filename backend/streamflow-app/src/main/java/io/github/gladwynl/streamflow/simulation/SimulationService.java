@@ -145,7 +145,8 @@ public final class SimulationService {
         return summary;
     }
 
-    private void publish(EventEnvelope event, Counters counters, Queue<Failure> failures) {
+    /** The Kafka record of an event: keyed by user id, with the identity headers ({@link EventHeaders}). */
+    public static ProducerRecord<String, byte[]> toRecord(String topic, EventEnvelope event, EventCodec codec) {
         RecordHeaders headers = new RecordHeaders();
         headers.add(EventHeaders.RUN_ID, event.runId().toString().getBytes(UTF_8));
         headers.add(EventHeaders.EVENT_ID, event.eventId().toString().getBytes(UTF_8));
@@ -153,8 +154,11 @@ public final class SimulationService {
         headers.add(
                 EventHeaders.SCHEMA_VERSION,
                 Integer.toString(event.schemaVersion()).getBytes(UTF_8));
-        ProducerRecord<String, byte[]> record =
-                new ProducerRecord<>(topic, null, event.userId(), codec.encode(event), headers);
+        return new ProducerRecord<>(topic, null, event.userId(), codec.encode(event), headers);
+    }
+
+    private void publish(EventEnvelope event, Counters counters, Queue<Failure> failures) {
+        ProducerRecord<String, byte[]> record = toRecord(topic, event, codec);
 
         counters.attempted.incrementAndGet();
         try {

@@ -57,8 +57,12 @@ class GenerateConfiguration {
                 runs,
                 queries,
                 lagReader,
-                properties.worker().consumerGroup(),
-                topics.events(),
+                new ReconciliationService.Topology(
+                        properties.worker().consumerGroup(),
+                        topics.events(),
+                        properties.deadLetters().ingestorGroup(),
+                        topics.deadLetter()),
+                properties.retention().events(),
                 json,
                 Clock.systemUTC());
     }

@@ -41,6 +41,7 @@ class ArchitectureTest {
                     "io.github.gladwynl.streamflow.processing..",
                     "io.github.gladwynl.streamflow.simulation..",
                     "io.github.gladwynl.streamflow.reconciliation..",
+                    "io.github.gladwynl.streamflow.deadletter..",
                     "io.github.gladwynl.streamflow.events..")
             .should()
             .dependOnClassesThat()

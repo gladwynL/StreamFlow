@@ -14,7 +14,40 @@ public record StreamflowProperties(
         @DefaultValue Status status,
         @DefaultValue Generate generate,
         @DefaultValue Retention retention,
-        @DefaultValue CrashTest crashTest) {
+        @DefaultValue CrashTest crashTest,
+        @DefaultValue FaultInjection faultInjection,
+        @DefaultValue DeadLetters deadLetters,
+        @DefaultValue Api api) {
+
+    /**
+     * Fault-injection scenarios (table {@code fault_scenarios}); see {@code FaultInjector}.
+     *
+     * @param enabled scenarios are ignored unless this is true; off by default
+     */
+    public record FaultInjection(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("500ms") Duration refreshInterval) {}
+
+    /**
+     * Dead-letter ingestion and replay.
+     *
+     * @param ingestorGroup consumer group that copies the dead-letter topic into PostgreSQL
+     * @param claimTimeout a replay claim older than this is released by the sweeper (the replayer is presumed
+     *     crashed); a second publication of the same event is suppressed by the ledger
+     * @param maxReplayBatch upper bound on dead letters per replay request
+     */
+    public record DeadLetters(
+            @DefaultValue("streamflow-dlt-ingestor") String ingestorGroup,
+            @DefaultValue("2m") Duration claimTimeout,
+            @DefaultValue("100") int maxReplayBatch) {}
+
+    /**
+     * @param operatorKey required in {@code X-StreamFlow-Operator-Key} for replay and discard; when blank those
+     *     operations are disabled
+     * @param operatorRequestsPerMinute rate limit of operator requests per api process
+     */
+    public record Api(
+            String operatorKey, @DefaultValue("30") int operatorRequestsPerMinute) {}
 
     /**
      * @param adminTimeout upper bound for each Kafka admin request (cluster description, topic description, creation)
@@ -38,17 +71,41 @@ public record StreamflowProperties(
      * @param consumerGroup Kafka consumer group of the event processors
      * @param concurrency consumer threads per worker process; workers × concurrency beyond the partition count idle
      * @param maxPollRecords upper bound on records per poll, and so on records redelivered after a crash
+     * @param retry in-place retry policy (ADR-0006)
      */
     public record Worker(
             @DefaultValue("5s") Duration heartbeatInterval,
             @DefaultValue("24h") Duration heartbeatRetention,
             @DefaultValue("streamflow-processor") String consumerGroup,
             @DefaultValue("3") int concurrency,
-            @DefaultValue("500") int maxPollRecords) {
+            @DefaultValue("500") int maxPollRecords,
+            @DefaultValue Retry retry) {
 
         /** A worker counts as live if its last heartbeat is newer than three heartbeat intervals. */
         public Duration liveThreshold() {
             return heartbeatInterval.multipliedBy(3);
+        }
+    }
+
+    /**
+     * In-place retries. Attempt counts are kept in memory per partition assignment: a worker restart or rebalance
+     * during retries starts the count again (ADR-0006).
+     *
+     * @param transientMaxAttempts total delivery attempts of a transient failure before it is dead-lettered
+     * @param transientInitialBackoff back-off before the first retry; doubles per retry up to the maximum
+     * @param infrastructureMaxBackoff cap of the unlimited back-off used while a dependency is unavailable
+     */
+    public record Retry(
+            @DefaultValue("3") int transientMaxAttempts,
+            @DefaultValue("200ms") Duration transientInitialBackoff,
+            @DefaultValue("2s") Duration transientMaxBackoff,
+            @DefaultValue("500ms") Duration infrastructureInitialBackoff,
+            @DefaultValue("10s") Duration infrastructureMaxBackoff) {
+
+        public Retry {
+            if (transientMaxAttempts < 1 || transientMaxAttempts > 10) {
+                throw new IllegalArgumentException("transientMaxAttempts must be between 1 and 10");
+            }
         }
     }
 
@@ -76,12 +133,19 @@ public record StreamflowProperties(
      * Retention of the deduplication ledger and the windows in which an event can come back (ADR-0008).
      *
      * @param ledger how long ledger rows are kept; must cover every redelivery and replay window plus the margin
-     * @param replayWindow dead letters older than this cannot be replayed (Phase 3)
+     * @param replayWindow dead letters older than this cannot be replayed and become EXPIRED
+     * @param events daily {@code events} partitions older than this are dropped
+     * @param stats minute aggregates older than this are deleted
+     * @param resolvedDeadLetters replayed and discarded dead letters are deleted this long after resolution;
+     *     unresolved (pending or expired) dead letters are never deleted automatically
      */
     public record Retention(
             @DefaultValue("8d") Duration ledger,
             @DefaultValue("7d") Duration replayWindow,
-            @DefaultValue("1d") Duration margin) {}
+            @DefaultValue("1d") Duration margin,
+            @DefaultValue("7d") Duration events,
+            @DefaultValue("30d") Duration stats,
+            @DefaultValue("14d") Duration resolvedDeadLetters) {}
 
     /**
      * Crash-recovery test hook; see {@code CrashInjector}. Disabled when {@code point} is unset.
@@ -93,7 +157,11 @@ public record StreamflowProperties(
 
         public enum CrashPoint {
             BEFORE_DB_COMMIT,
-            AFTER_DB_COMMIT
+            AFTER_DB_COMMIT,
+            /** After the dead-letter record is acknowledged, before the source offset is committed. */
+            AFTER_DLT_PUBLISH,
+            /** After a replayed record is acknowledged, before the dead letter is marked REPLAYED. */
+            AFTER_REPLAY_PUBLISH
         }
     }
 }
