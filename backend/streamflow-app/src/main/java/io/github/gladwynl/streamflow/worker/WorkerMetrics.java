@@ -1,9 +1,11 @@
 package io.github.gladwynl.streamflow.worker;
 
+import io.github.gladwynl.streamflow.persistence.WorkerCounters;
 import io.github.gladwynl.streamflow.processing.FailureCategory;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.context.annotation.Profile;
@@ -96,6 +98,22 @@ public class WorkerMetrics {
 
     public double consumerErrors() {
         return consumerErrors.count();
+    }
+
+    /** The counters reported with the worker's heartbeat. */
+    WorkerCounters snapshot(List<Integer> assignedPartitions) {
+        return new WorkerCounters(
+                (long) processed.count(),
+                (long) duplicates.count(),
+                (long) failures(FailureCategory.BAD_RECORD),
+                (long) failures(FailureCategory.TRANSIENT),
+                (long) failures(FailureCategory.INFRASTRUCTURE),
+                (long) (deadLetteredCount(FailureCategory.BAD_RECORD) + deadLetteredCount(FailureCategory.TRANSIENT)),
+                (long) deadLetterPublishFailures(),
+                (long) rebalances(),
+                (long) consumerErrors(),
+                inOutage(),
+                assignedPartitions);
     }
 
     public boolean inOutage() {

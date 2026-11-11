@@ -55,6 +55,10 @@ public class RetentionMaintenance {
                         "DELETE FROM event_stats_minute WHERE bucket_start < now() - make_interval(secs => :seconds)")
                 .param("seconds", seconds(retention.stats()))
                 .update();
+        deletedStats += jdbc.sql(
+                        "DELETE FROM latency_stats_minute WHERE bucket_start < now() - make_interval(secs => :seconds)")
+                .param("seconds", seconds(retention.stats()))
+                .update();
         return new Result(expired, deletedDeadLetters, deletedLedger, droppedPartitions, deletedStats);
     }
 

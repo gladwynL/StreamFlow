@@ -1,5 +1,9 @@
 package io.github.gladwynl.streamflow.simulation;
 
+import io.github.gladwynl.streamflow.events.EventType;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * A bounded simulation run.
  *
@@ -7,8 +11,10 @@ package io.github.gladwynl.streamflow.simulation;
  * @param events number of events to attempt
  * @param ratePerSecond target publication rate (constant)
  * @param users size of the simulated user population
+ * @param eventTypes event types to emit; the generator's session model still runs in full, and events of other
+ *     types are generated and dropped, so content stays a deterministic function of the whole spec
  */
-public record SimulationSpec(long seed, long events, int ratePerSecond, int users) {
+public record SimulationSpec(long seed, long events, int ratePerSecond, int users, Set<EventType> eventTypes) {
 
     public static final long MAX_EVENTS = 10_000_000L;
     public static final int MAX_RATE_PER_SECOND = 100_000;
@@ -24,6 +30,18 @@ public record SimulationSpec(long seed, long events, int ratePerSecond, int user
         if (users < 1 || users > MAX_USERS) {
             throw new IllegalArgumentException("users must be between 1 and " + MAX_USERS);
         }
+        eventTypes = eventTypes == null || eventTypes.isEmpty()
+                ? EnumSet.allOf(EventType.class)
+                : EnumSet.copyOf(eventTypes);
+    }
+
+    /** A spec that emits every event type. */
+    public SimulationSpec(long seed, long events, int ratePerSecond, int users) {
+        this(seed, events, ratePerSecond, users, null);
+    }
+
+    public boolean emits(EventType type) {
+        return eventTypes.contains(type);
     }
 
     /** Offset of event {@code sequence} from the run start at the target rate, in microseconds. */

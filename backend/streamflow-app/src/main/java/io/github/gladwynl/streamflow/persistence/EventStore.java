@@ -83,6 +83,31 @@ public class EventStore {
                 .update();
     }
 
+    /**
+     * Counts the event's processing latency (transaction start − Kafka append time, database clock) into the
+     * per-minute histogram. The bucket index is the number of bucket bounds below the latency.
+     */
+    public void addLatency(Instant kafkaTimestamp, int partition) {
+        jdbc.sql("""
+                        INSERT INTO latency_stats_minute (bucket_start, kafka_partition, bucket_index, event_count)
+                        SELECT date_trunc('minute', now()), :partition,
+                               (SELECT count(*) FROM unnest(%s) AS bound WHERE bound < sample.latency_ms), 1
+                        FROM (SELECT greatest(0, floor(extract(epoch FROM now() - :kafkaTs) * 1000))::bigint
+                                     AS latency_ms) sample
+                        ON CONFLICT (bucket_start, kafka_partition, bucket_index) DO UPDATE
+                        SET event_count = latency_stats_minute.event_count + 1
+                        """.formatted(LATENCY_BOUNDS_SQL))
+                .param("partition", partition)
+                .param("kafkaTs", Timestamp.from(kafkaTimestamp))
+                .update();
+    }
+
+    private static final String LATENCY_BOUNDS_SQL = "ARRAY["
+            + java.util.Arrays.stream(LatencyBuckets.UPPER_BOUNDS)
+                    .mapToObj(Long::toString)
+                    .collect(java.util.stream.Collectors.joining(","))
+            + "]::bigint[]";
+
     public void countProcessed(UUID runId, int partition) {
         upsertRunStats(runId, partition, 1, 0);
     }

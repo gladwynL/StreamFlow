@@ -6,16 +6,21 @@ import jakarta.annotation.PreDestroy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataAccessException;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,6 +35,8 @@ class HeartbeatPublisher {
     private static final int MAX_HOST_LENGTH = 255;
 
     private final HeartbeatRepository repository;
+    private final WorkerMetrics metrics;
+    private final KafkaListenerEndpointRegistry listeners;
     private final Duration interval;
     private final Duration retention;
     private final UUID workerId = UUID.randomUUID();
@@ -40,8 +47,14 @@ class HeartbeatPublisher {
         return thread;
     });
 
-    HeartbeatPublisher(HeartbeatRepository repository, StreamflowProperties properties) {
+    HeartbeatPublisher(
+            HeartbeatRepository repository,
+            WorkerMetrics metrics,
+            KafkaListenerEndpointRegistry listeners,
+            StreamflowProperties properties) {
         this.repository = repository;
+        this.metrics = metrics;
+        this.listeners = listeners;
         this.interval = properties.worker().heartbeatInterval();
         this.retention = properties.worker().heartbeatRetention();
     }
@@ -68,13 +81,23 @@ class HeartbeatPublisher {
 
     private void beat() {
         try {
-            repository.recordHeartbeat(workerId, host);
+            repository.recordHeartbeat(workerId, host, metrics.snapshot(assignedPartitions()));
         } catch (DataAccessException e) {
             log.warn("Heartbeat failed for worker {}: {}", workerId, e.getMessage());
         } catch (RuntimeException e) {
             // Keep the schedule alive: an uncaught exception would silently cancel future heartbeats.
             log.error("Unexpected heartbeat failure for worker {}", workerId, e);
         }
+    }
+
+    /** Event-topic partitions currently assigned to this worker's consumers (empty during a rebalance). */
+    private List<Integer> assignedPartitions() {
+        MessageListenerContainer container =
+                listeners.getListenerContainer(io.github.gladwynl.streamflow.worker.EventListener.LISTENER_ID);
+        Collection<TopicPartition> assigned = container == null ? null : container.getAssignedPartitions();
+        return assigned == null
+                ? List.of()
+                : assigned.stream().map(TopicPartition::partition).sorted().toList();
     }
 
     @PreDestroy

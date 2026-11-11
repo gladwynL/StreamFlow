@@ -15,7 +15,6 @@ import java.time.Instant;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -66,6 +65,11 @@ public final class SimulationService {
     }
 
     public RunSummary run(SimulationSpec spec) {
+        return run(spec, new RunProgress());
+    }
+
+    /** Publishes the run, updating {@code progress} live; {@link RunProgress#requestStop()} ends it early. */
+    public RunSummary run(SimulationSpec spec, RunProgress progress) {
         UUID runId = UUID.randomUUID();
         Instant runStart = clock.instant();
         runs.create(
@@ -75,7 +79,11 @@ public final class SimulationService {
                 spec.events(),
                 spec.ratePerSecond(),
                 spec.users(),
-                topic);
+                topic,
+                spec.eventTypes().size() == io.github.gladwynl.streamflow.events.EventType.values().length
+                        ? null
+                        : spec.eventTypes().stream().map(Enum::name).sorted().toList());
+        progress.started(runId);
         log.info(
                 "Run {} started: seed={}, events={}, rate={}/s, topic={}",
                 runId,
@@ -86,7 +94,7 @@ public final class SimulationService {
 
         EventContentGenerator generator = new EventContentGenerator(spec);
         ContentHasher hasher = new ContentHasher(codec);
-        Counters counters = new Counters();
+        RunProgress counters = progress;
         Queue<Failure> pendingFailures = new ConcurrentLinkedQueue<>();
         String stopReason = null;
         long startNanos = System.nanoTime();
@@ -94,6 +102,10 @@ public final class SimulationService {
         while (generator.hasNext()) {
             if (Thread.currentThread().isInterrupted()) {
                 stopReason = "interrupted";
+                break;
+            }
+            if (progress.stopRequested()) {
+                stopReason = "stopped by operator";
                 break;
             }
             if (counters.failures() > maxPublishFailures) {
@@ -141,6 +153,7 @@ public final class SimulationService {
                 counters.ambiguous.get(),
                 hasher.hex(),
                 Duration.ofNanos(System.nanoTime() - startNanos));
+        progress.finished();
         log.info("Run {} finished: {}", runId, summary);
         return summary;
     }
@@ -157,7 +170,7 @@ public final class SimulationService {
         return new ProducerRecord<>(topic, null, event.userId(), codec.encode(event), headers);
     }
 
-    private void publish(EventEnvelope event, Counters counters, Queue<Failure> failures) {
+    private void publish(EventEnvelope event, RunProgress counters, Queue<Failure> failures) {
         ProducerRecord<String, byte[]> record = toRecord(topic, event, codec);
 
         counters.attempted.incrementAndGet();
@@ -175,7 +188,7 @@ public final class SimulationService {
     }
 
     private static void recordFailure(
-            EventEnvelope event, Throwable error, boolean thrownBySend, Counters counters, Queue<Failure> failures) {
+            EventEnvelope event, Throwable error, boolean thrownBySend, RunProgress counters, Queue<Failure> failures) {
         FailureOutcome outcome = PublishFailureClassifier.classify(error, thrownBySend);
         (outcome == FailureOutcome.DEFINITE ? counters.definite : counters.ambiguous).incrementAndGet();
         failures.add(new Failure(event.sequence(), event.eventId(), outcome, error.toString()));
@@ -197,19 +210,4 @@ public final class SimulationService {
     }
 
     private record Failure(long sequence, UUID eventId, FailureOutcome outcome, String error) {}
-
-    private static final class Counters {
-        final AtomicLong attempted = new AtomicLong();
-        final AtomicLong acked = new AtomicLong();
-        final AtomicLong definite = new AtomicLong();
-        final AtomicLong ambiguous = new AtomicLong();
-
-        long failures() {
-            return definite.get() + ambiguous.get();
-        }
-
-        long outcomes() {
-            return acked.get() + failures();
-        }
-    }
 }

@@ -97,6 +97,15 @@ public final class IntegrationTestInfrastructure {
         return runRole("worker", args);
     }
 
+    /** Starts an api on the pipeline on a random port ({@code local.server.port}). Close the context to stop it. */
+    public static ConfigurableApplicationContext startApi(Pipeline pipeline, String... extraArguments) {
+        List<String> args = new ArrayList<>(pipeline.arguments());
+        args.add("--server.port=0");
+        args.add("--management.server.port=0");
+        args.addAll(List.of(extraArguments));
+        return runRole("api", args);
+    }
+
     /** Runs the generate role on the pipeline; it returns once the run has been published and reconciled. */
     public static ConfigurableApplicationContext runGenerate(Pipeline pipeline, String... extraArguments) {
         List<String> args = new ArrayList<>(pipeline.arguments());

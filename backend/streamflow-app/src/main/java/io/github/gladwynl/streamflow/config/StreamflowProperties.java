@@ -45,9 +45,17 @@ public record StreamflowProperties(
      * @param operatorKey required in {@code X-StreamFlow-Operator-Key} for replay and discard; when blank those
      *     operations are disabled
      * @param operatorRequestsPerMinute rate limit of operator requests per api process
+     * @param maxLiveClients concurrent WebSocket clients of the live feed; further connections are refused
+     * @param liveSendTimeout a client whose snapshot send takes longer than this is disconnected
+     * @param liveMaxSkippedTicks consecutive snapshots a client may miss because its previous send is still in
+     *     progress before it is disconnected
      */
     public record Api(
-            String operatorKey, @DefaultValue("30") int operatorRequestsPerMinute) {}
+            String operatorKey,
+            @DefaultValue("30") int operatorRequestsPerMinute,
+            @DefaultValue("20") int maxLiveClients,
+            @DefaultValue("3s") Duration liveSendTimeout,
+            @DefaultValue("5") int liveMaxSkippedTicks) {}
 
     /**
      * @param adminTimeout upper bound for each Kafka admin request (cluster description, topic description, creation)
@@ -74,7 +82,7 @@ public record StreamflowProperties(
      * @param retry in-place retry policy (ADR-0006)
      */
     public record Worker(
-            @DefaultValue("5s") Duration heartbeatInterval,
+            @DefaultValue("2s") Duration heartbeatInterval,
             @DefaultValue("24h") Duration heartbeatRetention,
             @DefaultValue("streamflow-processor") String consumerGroup,
             @DefaultValue("3") int concurrency,

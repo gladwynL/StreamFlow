@@ -66,6 +66,7 @@ public class EventProcessor {
                 store.insertEvent(
                         event, payloadJson, Instant.ofEpochMilli(record.timestamp()), partition, record.offset());
                 store.addToMinuteStats(event, partition);
+                store.addLatency(Instant.ofEpochMilli(record.timestamp()), partition);
                 store.countProcessed(event.runId(), partition);
             } else {
                 store.countDuplicate(event.runId(), partition);

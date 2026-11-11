@@ -1,6 +1,7 @@
 package io.github.gladwynl.streamflow.reconciliation;
 
 import io.github.gladwynl.streamflow.kafka.ConsumerLagReader;
+import io.github.gladwynl.streamflow.kafka.KafkaAdminException;
 import io.github.gladwynl.streamflow.kafka.TopicSpec;
 import io.github.gladwynl.streamflow.persistence.ReconciliationQueries;
 import io.github.gladwynl.streamflow.persistence.RunRepository;
@@ -59,10 +60,10 @@ public final class ReconciliationService {
     /** Waits up to {@code timeout} for zero lag, then reconciles (INCOMPLETE if lag remains) and stores the result. */
     public ReconciliationReport awaitDrainAndReconcile(UUID runId, Duration timeout) throws InterruptedException {
         Instant deadline = clock.instant().plus(timeout);
-        boolean drained = isDrained();
+        boolean drained = isDrainedOrUnknown();
         while (!drained && clock.instant().isBefore(deadline)) {
             Thread.sleep(POLL_INTERVAL);
-            drained = isDrained();
+            drained = isDrainedOrUnknown();
         }
         return reconcile(runId, drained);
     }
@@ -118,5 +119,19 @@ public final class ReconciliationService {
     private boolean isDrained() {
         return lagReader.totalLag(topology.processingGroup(), topology.events()) == 0
                 && lagReader.totalLag(topology.ingestorGroup(), topology.deadLetters()) == 0;
+    }
+
+    /**
+     * {@link #isDrained()} while waiting: a lag query that fails (for example a Kafka admin timeout under load) counts
+     * as "not drained yet" and is retried at the next poll, instead of abandoning the reconciliation. It can only delay
+     * the verdict; a run that is never observed drained reconciles as INCOMPLETE, never PASS.
+     */
+    boolean isDrainedOrUnknown() {
+        try {
+            return isDrained();
+        } catch (KafkaAdminException e) {
+            log.warn("Lag query failed while waiting for the run to drain; retrying: {}", e.getMessage());
+            return false;
+        }
     }
 }

@@ -61,6 +61,17 @@ public final class EventContentGenerator {
         }
         long sequence = nextSequence++;
         while (true) {
+            GeneratedEvent candidate = nextCandidate(sequence);
+            // With every type selected the first candidate is always taken, so the draws (and the content hash) are
+            // identical to a generator without a type filter.
+            if (spec.emits(candidate.eventType())) {
+                return candidate;
+            }
+        }
+    }
+
+    private GeneratedEvent nextCandidate(long sequence) {
+        while (true) {
             int user = random.nextInt(spec.users());
             String userId = "u-%06d".formatted(user);
             Session session = sessions.get(user);

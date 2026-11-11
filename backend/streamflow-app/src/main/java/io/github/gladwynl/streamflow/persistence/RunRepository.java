@@ -52,10 +52,24 @@ public class RunRepository {
             int ratePerSecond,
             int users,
             String topic) {
+        create(runId, seed, contentVersion, requestedEvents, ratePerSecond, users, topic, null);
+    }
+
+    /** @param eventTypes the event types the run is restricted to, or null for every type */
+    public void create(
+            UUID runId,
+            long seed,
+            int contentVersion,
+            long requestedEvents,
+            int ratePerSecond,
+            int users,
+            String topic,
+            java.util.List<String> eventTypes) {
         jdbc.sql("""
                         INSERT INTO simulation_runs (run_id, seed, content_version, requested_events, rate_per_second,
-                                                     users, topic, status)
-                        VALUES (:runId, :seed, :contentVersion, :requestedEvents, :rate, :users, :topic, 'RUNNING')
+                                                     users, topic, status, event_types)
+                        VALUES (:runId, :seed, :contentVersion, :requestedEvents, :rate, :users, :topic, 'RUNNING',
+                                CAST(:eventTypes AS text[]))
                         """)
                 .param("runId", runId)
                 .param("seed", seed)
@@ -64,6 +78,7 @@ public class RunRepository {
                 .param("rate", ratePerSecond)
                 .param("users", users)
                 .param("topic", topic)
+                .param("eventTypes", eventTypes == null ? null : "{" + String.join(",", eventTypes) + "}")
                 .update();
     }
 

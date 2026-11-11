@@ -61,7 +61,7 @@ streamflow:
           "[retention.bytes]": "268435456"    # 256 MiB per partition
           "[segment.bytes]": "134217728"      # 128 MiB
   worker:
-    heartbeat-interval: 5s
+    heartbeat-interval: 2s
     heartbeat-retention: 24h
   migrate:
     kafka-ready-timeout: 60s
