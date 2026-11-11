@@ -65,7 +65,7 @@ jobs:
     name: Compose smoke test
     needs: [backend, frontend]
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - name: Create .env with a throwaway password
@@ -81,7 +81,21 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8080/ | grep -q '<div id="root">'
           curl --fail --silent --show-error http://127.0.0.1:8080/api/v1/system/status | tee status.json
           echo
-          jq -e '.status == "OK" and .kafka.reachable and .database.schemaVersion == "1" and ([.workers[] | select(.live)] | length) >= 1' status.json
+          jq -e '.status == "OK" and .kafka.reachable and .database.schemaVersion == "2" and ([.workers[] | select(.live)] | length) >= 1' status.json
+      # Phase 2 acceptance: 100,000 events at 1,000 events/s must reconcile exactly (exit status 0 = PASS).
+      - name: Publish a 100,000-event seeded run and require it to reconcile as PASS
+        run: |
+          docker compose --profile app run --rm --no-deps \
+            -e STREAMFLOW_GENERATE_EVENTS=100000 \
+            -e STREAMFLOW_GENERATE_RATE_PER_SECOND=1000 \
+            -e STREAMFLOW_GENERATE_DRAIN_TIMEOUT=600s \
+            generate
+      - name: Show the stored reconciliation result
+        run: |
+          docker compose exec -T postgres psql -U streamflow -d streamflow -c \
+            "SELECT r.run_id, r.attempted, r.acked, c.result, c.details->>'processed' AS processed,
+                    c.details->>'duplicatesSuppressed' AS duplicates, c.checked_at
+             FROM run_reconciliations c JOIN simulation_runs r USING (run_id) ORDER BY c.checked_at"
       - name: Show service state and logs
         if: always()
         run: |

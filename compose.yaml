@@ -140,6 +140,22 @@ services:
     stop_grace_period: 30s
     mem_limit: 512m
 
+  # One-shot seeded simulation run; exits 0 PASS, 2 FAIL, 3 INCOMPLETE after reconciling.
+  # With the app profile running:  docker compose run --rm --no-deps generate
+  generate:
+    <<: *app
+    environment:
+      <<: *app-env
+      SPRING_PROFILES_ACTIVE: generate
+      STREAMFLOW_GENERATE_SEED: ${STREAMFLOW_GENERATE_SEED:-42}
+      STREAMFLOW_GENERATE_EVENTS: ${STREAMFLOW_GENERATE_EVENTS:-10000}
+      STREAMFLOW_GENERATE_RATE_PER_SECOND: ${STREAMFLOW_GENERATE_RATE_PER_SECOND:-1000}
+      STREAMFLOW_GENERATE_DRAIN_TIMEOUT: ${STREAMFLOW_GENERATE_DRAIN_TIMEOUT:-300s}
+    # Runs against an already running stack, so it declares no dependencies.
+    restart: "no"
+    mem_limit: 512m
+    profiles: [generate]
+
   web:
     build:
       context: ./frontend
