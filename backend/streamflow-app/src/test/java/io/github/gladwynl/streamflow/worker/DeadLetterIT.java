@@ -135,7 +135,7 @@ class DeadLetterIT {
                 e.payload());
     }
 
-    /** Partition → index of the consumer thread that owns it, once all partitions are assigned. */
+    /** Partition → index of the consumer thread that owns it, once every consumer thread has its partitions. */
     static Map<Integer, Integer> awaitAssignment(ConfigurableApplicationContext worker) {
         ConcurrentMessageListenerContainer<?, ?> container = (ConcurrentMessageListenerContainer<?, ?>)
                 worker.getBean(KafkaListenerEndpointRegistry.class).getListenerContainer(EventListener.LISTENER_ID);
@@ -151,7 +151,10 @@ class DeadLetterIT {
                     }
                 }
             }
-            return owner.size() == Pipeline.PARTITIONS;
+            // Stable only when every consumer thread owns partitions: with eager assignment the first consumer to
+            // join briefly owns all of them, and the next join revokes them again.
+            return owner.size() == Pipeline.PARTITIONS
+                    && owner.values().stream().distinct().count() == consumers.size();
         });
         return Map.copyOf(owner);
     }

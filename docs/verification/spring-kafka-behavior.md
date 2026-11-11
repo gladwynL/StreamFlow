@@ -70,6 +70,13 @@ Item 7 (batch listener) belongs to Phase 5.
   dead-letters bad records on the first attempt, so the thread moves on; `DeadLetterIT` verifies that a partition
   sharing the thread with a bad record is fully processed. An infrastructure outage still pauses every partition, by
   design.
+- **Retry counts restart on reassignment, observed in CI.** In the first CI run of `RetryIT` the run was published
+  before the worker's three consumers had all joined. A rebalance during the joins revoked a partition while one
+  record was between retries; after reassignment its attempt count started again at 1, so it failed 2 more times
+  than the per-record arithmetic predicts (264 transient failures instead of 262). Every outcome was still correct
+  (processed, or dead-lettered with `attempts = 3`; reconciliation PASS). This is the documented per-assignment
+  semantics; the test now publishes only after all partitions are assigned and asserts that no rebalance occurred,
+  so its exact count is meaningful.
 - **`deliveryAttempt()` during recovery reports the next attempt.** While the recoverer runs, the error handler's
   `deliveryAttempt(tpo)` returns attempts made + 1 (2 for a bad record that failed once, 4 for a record exhausted
   after 3). The `sf-delivery-attempts` header therefore records `deliveryAttempt − 1`; `DeadLetterIT` and `RetryIT`

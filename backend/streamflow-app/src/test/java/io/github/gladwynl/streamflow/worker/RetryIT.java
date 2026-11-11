@@ -38,13 +38,24 @@ class RetryIT {
             tools.faultScenarios().activate(Kind.TRANSIENT_FAILURES, "PRODUCT_VIEWED", 2, Duration.ofMinutes(5));
             tools.faultScenarios().activate(Kind.TRANSIENT_FAILURES, "CART_UPDATED", 5, Duration.ofMinutes(5));
             try {
-                RunSummary run = tools.simulation().run(new SimulationSpec(23, 300, 5_000, 200));
+                RunSummary run;
                 ReconciliationReport report;
                 WorkerMetrics metrics;
+                double rebalancesBeforeRun;
                 try (ConfigurableApplicationContext worker = IntegrationTestInfrastructure.startWorker(
                         PIPELINE, "--streamflow.fault-injection.enabled=true")) {
-                    report = tools.reconciliation().awaitDrainAndReconcile(run.runId(), Duration.ofSeconds(120));
+                    // Attempt counts restart when a partition is reassigned (documented semantics). Publish only once
+                    // all partitions are assigned, so the exact counts below are not disturbed by the consumers'
+                    // initial joins; a rebalance during the run is then asserted not to have happened.
+                    DeadLetterIT.awaitAssignment(worker);
                     metrics = worker.getBean(WorkerMetrics.class);
+                    rebalancesBeforeRun = metrics.rebalances();
+                    run = tools.simulation().run(new SimulationSpec(23, 300, 5_000, 200));
+                    report = tools.reconciliation().awaitDrainAndReconcile(run.runId(), Duration.ofSeconds(120));
+                    // Checked before closing: shutting the worker down revokes its partitions too.
+                    assertThat(metrics.rebalances())
+                            .as("no rebalance during the run")
+                            .isEqualTo(rebalancesBeforeRun);
                 }
                 Map<String, Long> byType = eventTypes(tools, run.runId());
                 long views = byType.getOrDefault(EventType.PRODUCT_VIEWED.name(), 0L);
