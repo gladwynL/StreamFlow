@@ -39,6 +39,26 @@ to 127.0.0.1.
 Stop it with `docker compose --profile app down` (add `--volumes` to delete Kafka and PostgreSQL
 data).
 
+### Publishing a simulation run
+
+With the full stack running, the one-shot `generate` role publishes a seeded run of synthetic
+events, waits for the workers to process it, reconciles it and exits — `0` PASS, `2` FAIL,
+`3` INCOMPLETE:
+
+```bash
+docker compose run --rm --no-deps generate
+```
+
+Defaults: seed 42, 10,000 events at 1,000 events/s. Override with environment variables, for
+example:
+
+```bash
+docker compose run --rm --no-deps -e STREAMFLOW_GENERATE_EVENTS=100000 -e STREAMFLOW_GENERATE_SEED=7 generate
+```
+
+The log ends with the run id, producer outcomes, the content hash (equal for equal seeds) and the
+reconciliation verdict. Results are stored in `simulation_runs` and `run_reconciliations`.
+
 ### Infrastructure in Docker, applications from the IDE or terminal
 
 ```bash
@@ -55,7 +75,8 @@ SPRING_DATASOURCE_PASSWORD=<password> SPRING_PROFILES_ACTIVE=worker  ./mvnw -pl 
 ```
 
 In PowerShell, set the variables first, e.g. `$env:SPRING_PROFILES_ACTIVE = 'api'`. Exactly one role
-profile must be active or the application refuses to start.
+profile (`migrate`, `api`, `worker` or `generate`) must be active or the application refuses to
+start.
 
 Frontend dev server (proxies `/api` to `http://localhost:8080`, override with `STREAMFLOW_API_URL`):
 
