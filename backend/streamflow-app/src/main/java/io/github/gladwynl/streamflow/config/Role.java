@@ -13,13 +13,20 @@ import org.springframework.core.env.Environment;
 public enum Role {
     /** One-shot job: applies database migrations and provisions Kafka topics, then exits. */
     MIGRATE,
-    /** REST gateway and system status. */
+    /** REST gateway, system status and partition maintenance. */
     API,
-    /** Event processing; in Phase 1 it only reports liveness through heartbeats. */
-    WORKER;
+    /** Consumes, processes and persists events; reports liveness through heartbeats. */
+    WORKER,
+    /** One-shot job: publishes one bounded, seeded simulation run, reconciles it, then exits. */
+    GENERATE;
 
     public String profile() {
         return name().toLowerCase(Locale.ROOT);
+    }
+
+    /** One-shot roles exit when their work is done; their exit status reports the outcome. */
+    public boolean oneShot() {
+        return this == MIGRATE || this == GENERATE;
     }
 
     /**

@@ -1,0 +1,9 @@
+# generate role: one-shot job without a web server. Publishes one bounded simulation run
+# (streamflow.generate.*), waits for the workers to drain it, reconciles it and exits:
+# 0 PASS, 2 FAIL, 3 INCOMPLETE.
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    hikari:
+      maximum-pool-size: 2

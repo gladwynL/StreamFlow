@@ -17,15 +17,19 @@ class ArchitectureTest {
     private static final String API = "io.github.gladwynl.streamflow.api..";
     private static final String MIGRATE = "io.github.gladwynl.streamflow.migrate..";
     private static final String WORKER = "io.github.gladwynl.streamflow.worker..";
+    private static final String GENERATE = "io.github.gladwynl.streamflow.generate..";
 
     @ArchTest
-    static final ArchRule apiDoesNotDependOnOtherRoles = roleIsolated(API, MIGRATE, WORKER);
+    static final ArchRule apiDoesNotDependOnOtherRoles = roleIsolated(API, MIGRATE, WORKER, GENERATE);
 
     @ArchTest
-    static final ArchRule migrateDoesNotDependOnOtherRoles = roleIsolated(MIGRATE, API, WORKER);
+    static final ArchRule migrateDoesNotDependOnOtherRoles = roleIsolated(MIGRATE, API, WORKER, GENERATE);
 
     @ArchTest
-    static final ArchRule workerDoesNotDependOnOtherRoles = roleIsolated(WORKER, API, MIGRATE);
+    static final ArchRule workerDoesNotDependOnOtherRoles = roleIsolated(WORKER, API, MIGRATE, GENERATE);
+
+    @ArchTest
+    static final ArchRule generateDoesNotDependOnOtherRoles = roleIsolated(GENERATE, API, MIGRATE, WORKER);
 
     @ArchTest
     static final ArchRule sharedPackagesDoNotDependOnRoles = noClasses()
@@ -34,10 +38,23 @@ class ArchitectureTest {
                     "io.github.gladwynl.streamflow.config..",
                     "io.github.gladwynl.streamflow.kafka..",
                     "io.github.gladwynl.streamflow.persistence..",
+                    "io.github.gladwynl.streamflow.processing..",
+                    "io.github.gladwynl.streamflow.simulation..",
+                    "io.github.gladwynl.streamflow.reconciliation..",
                     "io.github.gladwynl.streamflow.events..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage(API, MIGRATE, WORKER);
+            .resideInAnyPackage(API, MIGRATE, WORKER, GENERATE);
+
+    /** Only processing code writes events; the API and the generator never touch the event store. */
+    @ArchTest
+    static final ArchRule onlyProcessingWritesEvents = noClasses()
+            .that()
+            .resideOutsideOfPackages(
+                    "io.github.gladwynl.streamflow.processing..", "io.github.gladwynl.streamflow.persistence..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("io.github.gladwynl.streamflow.persistence.EventStore");
 
     @ArchTest
     static final ArchRule eventContractsDoNotDependOnSpring = noClasses()

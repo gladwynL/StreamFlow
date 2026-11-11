@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
  * against a database with pending or modified migrations.
  */
 @Configuration(proxyBeanMethods = false)
-@Profile({"api", "worker"})
+@Profile({"api", "worker", "generate"})
 class FlywayValidationConfiguration {
 
     @Bean

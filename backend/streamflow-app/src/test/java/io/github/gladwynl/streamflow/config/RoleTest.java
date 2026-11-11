@@ -20,7 +20,7 @@ class RoleTest {
         assertThatIllegalStateException()
                 .isThrownBy(() -> Role.of(environment("local")))
                 .withMessageContaining("No StreamFlow role is active")
-                .withMessageContaining("migrate, api, worker");
+                .withMessageContaining("migrate, api, worker, generate");
     }
 
     @Test
@@ -34,6 +34,12 @@ class RoleTest {
     @Test
     void profileNameIsLowerCase() {
         assertThat(Role.WORKER.profile()).isEqualTo("worker");
+        assertThat(Role.GENERATE.profile()).isEqualTo("generate");
+    }
+
+    @Test
+    void onlyMigrateAndGenerateAreOneShot() {
+        assertThat(Role.values()).filteredOn(Role::oneShot).containsExactly(Role.MIGRATE, Role.GENERATE);
     }
 
     private static MockEnvironment environment(String... profiles) {

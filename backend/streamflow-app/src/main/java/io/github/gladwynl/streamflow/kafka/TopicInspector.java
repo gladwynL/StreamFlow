@@ -16,6 +16,7 @@ import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** Reads cluster and topic state through the Kafka admin API, bounding every call by the admin timeout. */
@@ -25,9 +26,14 @@ public class TopicInspector {
     private final Admin admin;
     private final Duration timeout;
 
+    @Autowired
     public TopicInspector(Admin admin, StreamflowProperties properties) {
+        this(admin, properties.kafka().adminTimeout());
+    }
+
+    public TopicInspector(Admin admin, Duration timeout) {
         this.admin = admin;
-        this.timeout = properties.kafka().adminTimeout();
+        this.timeout = timeout;
     }
 
     public ClusterInfo describeCluster() {

@@ -1,10 +1,12 @@
 package io.github.gladwynl.streamflow.migrate;
 
 import io.github.gladwynl.streamflow.config.StreamflowProperties;
+import io.github.gladwynl.streamflow.kafka.ConsumerGroupInitializer;
 import io.github.gladwynl.streamflow.kafka.KafkaAdminException;
 import io.github.gladwynl.streamflow.kafka.TopicCatalog;
 import io.github.gladwynl.streamflow.kafka.TopicProvisioner;
 import io.github.gladwynl.streamflow.kafka.TopicProvisioner.ProvisioningResult;
+import io.github.gladwynl.streamflow.persistence.PartitionMaintenance;
 import java.time.Duration;
 import java.time.Instant;
 import org.slf4j.Logger;
@@ -15,9 +17,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Provisions Kafka topics once Flyway has migrated the database (Spring Boot runs Flyway before application
- * runners). Kafka may still be starting, so admin timeouts are retried until the ready timeout; specification
- * conflicts fail immediately.
+ * Runs after Flyway has migrated the database (Spring Boot runs Flyway before application runners):
+ *
+ * <ol>
+ *   <li>creates the daily partitions of the {@code events} table;
+ *   <li>provisions the Kafka topics;
+ *   <li>gives the processing consumer group an initial offset on every partition (required by
+ *       {@code auto.offset.reset=none}).
+ * </ol>
+ *
+ * Kafka may still be starting, so admin timeouts are retried until the ready timeout; specification conflicts fail
+ * immediately.
  */
 @Component
 @Profile("migrate")
@@ -27,17 +37,30 @@ class MigrateRunner implements ApplicationRunner {
     private static final Duration RETRY_DELAY = Duration.ofSeconds(2);
 
     private final TopicProvisioner provisioner;
+    private final ConsumerGroupInitializer groupInitializer;
+    private final PartitionMaintenance partitions;
     private final TopicCatalog catalog;
+    private final String consumerGroup;
     private final Duration kafkaReadyTimeout;
 
-    MigrateRunner(TopicProvisioner provisioner, TopicCatalog catalog, StreamflowProperties properties) {
+    MigrateRunner(
+            TopicProvisioner provisioner,
+            ConsumerGroupInitializer groupInitializer,
+            PartitionMaintenance partitions,
+            TopicCatalog catalog,
+            StreamflowProperties properties) {
         this.provisioner = provisioner;
+        this.groupInitializer = groupInitializer;
+        this.partitions = partitions;
         this.catalog = catalog;
+        this.consumerGroup = properties.worker().consumerGroup();
         this.kafkaReadyTimeout = properties.migrate().kafkaReadyTimeout();
     }
 
     @Override
     public void run(ApplicationArguments args) throws InterruptedException {
+        log.info("Event partitions ensured: {} created", partitions.ensureEventPartitions());
+
         Instant deadline = Instant.now().plus(kafkaReadyTimeout);
         while (true) {
             try {
@@ -47,6 +70,7 @@ class MigrateRunner implements ApplicationRunner {
                         result.created(),
                         result.reconfigured(),
                         result.unchanged());
+                groupInitializer.initialize(consumerGroup, catalog.events());
                 return;
             } catch (KafkaAdminException e) {
                 if (Instant.now().plus(RETRY_DELAY).isAfter(deadline)) {

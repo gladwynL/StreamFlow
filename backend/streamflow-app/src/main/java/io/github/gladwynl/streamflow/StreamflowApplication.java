@@ -8,7 +8,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 /**
  * Entry point for every StreamFlow role. The role is selected by activating exactly one of the Spring profiles
- * {@code migrate}, {@code api} or {@code worker}.
+ * {@code migrate}, {@code api}, {@code worker} or {@code generate}.
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
@@ -16,8 +16,8 @@ public class StreamflowApplication {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(StreamflowApplication.class, args);
-        if (Role.of(context.getEnvironment()) == Role.MIGRATE) {
-            // migrate is a one-shot job: exit once migrations and topic provisioning have completed.
+        if (Role.of(context.getEnvironment()).oneShot()) {
+            // One-shot roles have finished their work in application runners; exit with their status.
             System.exit(SpringApplication.exit(context));
         }
     }

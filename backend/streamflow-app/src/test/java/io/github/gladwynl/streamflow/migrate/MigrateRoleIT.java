@@ -18,11 +18,12 @@ import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
@@ -37,11 +38,7 @@ class MigrateRoleIT {
     @BeforeAll
     static void connect() {
         admin = IntegrationTestInfrastructure.newAdmin();
-        jdbc = JdbcClient.create(DataSourceBuilder.create()
-                .url(IntegrationTestInfrastructure.jdbcUrl())
-                .username(IntegrationTestInfrastructure.jdbcUsername())
-                .password(IntegrationTestInfrastructure.jdbcPassword())
-                .build());
+        jdbc = IntegrationTestInfrastructure.jdbc();
     }
 
     @AfterAll
@@ -50,17 +47,63 @@ class MigrateRoleIT {
     }
 
     @Test
-    void appliesTheSchemaMigration() {
+    void appliesTheSchemaMigrations() {
         List<String> applied = jdbc.sql(
                         "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank")
                 .query(String.class)
                 .list();
 
-        assertThat(applied).containsExactly("1");
-        assertThat(jdbc.sql("SELECT to_regclass('worker_heartbeats') IS NOT NULL")
+        assertThat(applied).containsExactly("1", "2");
+        for (String table : List.of(
+                "worker_heartbeats",
+                "simulation_runs",
+                "publish_failures",
+                "processed_events",
+                "events",
+                "event_stats_minute",
+                "run_stats",
+                "run_reconciliations")) {
+            assertThat(jdbc.sql("SELECT to_regclass(:table) IS NOT NULL")
+                            .param("table", table)
+                            .query(Boolean.class)
+                            .single())
+                    .as(table)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void createsDailyEventPartitionsAheadOfTime() {
+        long dailyPartitions = jdbc.sql("""
+                        SELECT count(*) FROM pg_inherits i JOIN pg_class c ON c.oid = i.inhrelid
+                        WHERE i.inhparent = 'events'::regclass AND c.relname ~ '^events_[0-9]{8}$'
+                        """).query(Long.class).single();
+        String todayPartition = jdbc.sql("SELECT 'events_' || to_char(now() AT TIME ZONE 'UTC', 'YYYYMMDD')")
+                .query(String.class)
+                .single();
+
+        // One day back, today and seven days ahead.
+        assertThat(dailyPartitions).isEqualTo(9);
+        assertThat(jdbc.sql("SELECT to_regclass(:name) IS NOT NULL")
+                        .param("name", todayPartition)
                         .query(Boolean.class)
                         .single())
                 .isTrue();
+    }
+
+    @Test
+    void initializesEveryPartitionOffsetOfTheProcessingGroup() throws Exception {
+        Map<TopicPartition, OffsetAndMetadata> committed = admin.listConsumerGroupOffsets("streamflow-processor")
+                .partitionsToOffsetAndMetadata()
+                .get(10, TimeUnit.SECONDS);
+
+        // Other tests may consume the contract topic, so offsets can only have moved forward from zero.
+        assertThat(committed.keySet())
+                .extracting(TopicPartition::partition)
+                .containsExactlyInAnyOrder(0, 1, 2, 3, 4, 5);
+        assertThat(committed.keySet()).allSatisfy(tp -> assertThat(tp.topic()).isEqualTo(EventTopics.EVENTS));
+        assertThat(committed.values())
+                .allSatisfy(offset -> assertThat(offset.offset()).isNotNegative());
     }
 
     @Test
@@ -122,10 +165,12 @@ class MigrateRoleIT {
                 .untilAsserted(() -> assertThat(configs(topic)).containsEntry(key, value));
     }
 
+    /** Isolated topics and consumer group, so these runs never touch the shared processing group. */
     private static Map<String, Object> topicNames(String events, String deadLetter) {
         return Map.of(
                 "streamflow.kafka.topics.events.name", events,
-                "streamflow.kafka.topics.dead-letter.name", deadLetter);
+                "streamflow.kafka.topics.dead-letter.name", deadLetter,
+                "streamflow.worker.consumer-group", "it-" + events);
     }
 
     private static void assertShape(String topic, int partitions, int replicationFactor) throws Exception {
