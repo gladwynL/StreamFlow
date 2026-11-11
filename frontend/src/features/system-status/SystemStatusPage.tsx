@@ -159,7 +159,7 @@ function TopicsTable({ topics }: { topics: TopicStatus[] }) {
           Topic state is unavailable while Kafka is unreachable.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[36rem] text-left text-sm">
             <thead className="text-xs text-ink-muted uppercase">
               <tr>
@@ -215,7 +215,7 @@ function WorkersTable({ workers, checkedAt }: { workers: WorkerStatus[]; checked
       {workers.length === 0 ? (
         <p className="text-sm text-ink-muted">No worker has reported in the last 10 minutes.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[36rem] text-left text-sm">
             <thead className="text-xs text-ink-muted uppercase">
               <tr>

@@ -1,19 +1,32 @@
 @import 'tailwindcss';
 
+/*
+ * StreamFlow "graphite" theme: a near-black graphite canvas, hairline borders, teal signal accent, tabular
+ * monospace numerals for every measurement. Chart series colours are validated against the panel surface
+ * (dataviz validator: CVD and contrast checks pass on #12151c).
+ */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter var', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
 
-  --color-canvas: #0a101d;
-  --color-panel: #101a2d;
-  --color-panel-raised: #15213a;
-  --color-line: #22304f;
-  --color-ink: #e6ecf7;
-  --color-ink-muted: #9fadc6;
-  --color-accent: #38bdf8;
-  --color-ok: #34d399;
+  --color-canvas: #0b0d12;
+  --color-panel: #12151c;
+  --color-panel-raised: #191d26;
+  --color-line: #262b36;
+  --color-line-strong: #343a48;
+  --color-ink: #e9ebf0;
+  --color-ink-muted: #a0a7b5;
+  --color-ink-faint: #878e9e;
+  --color-accent: #5eead4;
+  --color-accent-strong: #2dd4bf;
+  --color-synthetic: #c4b5fd;
+  --color-ok: #4ade80;
   --color-warn: #fbbf24;
-  --color-bad: #f87171;
+  --color-bad: #fb7185;
+
+  --color-series-1: #3987e5;
+  --color-series-2: #d95926;
+  --color-series-3: #199e70;
 }
 
 html {
@@ -25,14 +38,58 @@ body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--color-canvas);
+  background-image: radial-gradient(
+    1200px 500px at 85% -10%,
+    rgb(94 234 212 / 0.06),
+    transparent 60%
+  );
+  background-repeat: no-repeat;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-canvas hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-line-strong bg-panel-raised px-3.5 py-2 text-sm font-medium text-ink hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-bad px-3.5 py-2 text-sm font-semibold text-canvas hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .field {
+    @apply mt-1 w-full rounded-md border border-line-strong bg-canvas px-3 py-2 text-sm text-ink;
+  }
+}
+
+dialog::backdrop {
+  background: rgb(5 6 10 / 0.72);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes sf-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.live-dot {
+  animation: sf-pulse 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -41,5 +98,6 @@ body {
   *::after {
     animation: none !important;
     transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

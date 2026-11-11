@@ -11,12 +11,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': { target: apiTarget, changeOrigin: false },
+      '/ws': { target: apiTarget.replace(/^http/, 'ws'), ws: true, changeOrigin: false },
     },
   },
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
   },
 });
