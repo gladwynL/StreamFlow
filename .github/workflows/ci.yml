@@ -101,8 +101,10 @@ jobs:
       # throwaway key and the worker allowed to run the predefined fault scenarios (compose.e2e.yaml).
       - name: Restart api and worker with the e2e overlay
         run: |
-          echo "STREAMFLOW_E2E_OPERATOR_KEY=$(openssl rand -hex 16)" >> "$GITHUB_ENV"
-          source "$GITHUB_ENV"
+          STREAMFLOW_E2E_OPERATOR_KEY=$(openssl rand -hex 16)
+          echo "::add-mask::$STREAMFLOW_E2E_OPERATOR_KEY"
+          echo "STREAMFLOW_E2E_OPERATOR_KEY=$STREAMFLOW_E2E_OPERATOR_KEY" >> "$GITHUB_ENV"
+          export STREAMFLOW_E2E_OPERATOR_KEY
           docker compose -f compose.yaml -f compose.e2e.yaml --profile app up --detach --wait --wait-timeout 300 api worker web
       - uses: actions/setup-node@v7
         with:
