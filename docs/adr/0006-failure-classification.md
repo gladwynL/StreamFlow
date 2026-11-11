@@ -1,7 +1,7 @@
 # ADR-0006: Three failure categories; retries in place
 
 - **Status:** Accepted, 2026-11-10
-- **Implemented:** Phase 3
+- **Implemented:** Phase 3 (2026-11-11)
 
 ## Context
 
@@ -27,5 +27,19 @@ back-off. Non-blocking retry topics are rejected.
 ## Verification
 
 Classifier unit tests; transient fault that clears; persistent fault dead-lettered after exactly 3
-attempts; PostgreSQL container paused for 20 s under load with zero dead letters and exact
+attempts; PostgreSQL container paused under load until infrastructure failures are observed, with zero dead letters and exact
 reconciliation.
+
+## Implementation notes (Phase 3)
+
+- `FailureClassifier` walks the cause chain. Unrecognized failures are classified as transient: retried a bounded
+  number of times, then dead-lettered rather than retried forever (an unknown bug in one record must not stall a
+  partition indefinitely).
+- Defaults: transient 3 attempts (200 ms, doubling, max 2 s); infrastructure unlimited (500 ms, doubling, capped at
+  10 s). Configurable under `streamflow.worker.retry`.
+- Retry counts are kept by Spring Kafka in memory per partition assignment; a restart or rebalance during retries
+  restarts the count (documented in `docs/reliability.md`).
+- A JDBC socket timeout (30 s) turns an unresponsive database into connection errors (infrastructure) instead of a
+  consumer thread blocked indefinitely.
+- Metrics: `streamflow.processing.failures{category}`, `streamflow.infrastructure.outage`,
+  `streamflow.infrastructure.recoveries`, `streamflow.consumer.rebalances`.

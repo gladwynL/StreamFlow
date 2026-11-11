@@ -30,3 +30,12 @@ as a limitation.
 
 Topic configs are asserted in `MigrateRoleIT` (Phase 1). Startup invariant check, retention jobs and
 an out-of-range test follow in Phases 2–3.
+
+## Implementation notes (Phase 3)
+
+- Hourly in the api role (`RetentionMaintenance`): expire PENDING dead letters past the replay window; delete
+  resolved dead letters after 14 days; delete ledger rows older than 8 days **only for runs with a final (PASS or
+  FAIL) reconciliation**, in batches of 10,000; drop daily `events` partitions older than 7 days; delete minute
+  aggregates older than 30 days. Every step is conditional and safe to run concurrently.
+- Reconciliation skips the event-row check for runs older than the events retention, whose partitions may be gone.
+- Verified by `RetentionIT` and `OffsetOutOfRangeIT`.

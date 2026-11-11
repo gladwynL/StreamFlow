@@ -1,9 +1,9 @@
 # StreamFlow
 
-> **Work in progress.** Phases 1–2 of a seven-phase plan are complete: foundations and the event
-> streaming core. Dead-letter handling and replay (Phase 3), the analytics dashboard (Phase 4) and
-> benchmarks (Phase 5) are designed but **not implemented yet**. This README only describes what
-> exists and has been verified.
+> **Work in progress.** Phases 1–3 of a seven-phase plan are complete: foundations, the event
+> streaming core, and reliability and recovery. The analytics dashboard (Phase 4) and benchmarks
+> (Phase 5) are designed but **not implemented yet**. This README only describes what exists and has
+> been verified.
 
 StreamFlow is a real-time distributed event streaming and analytics platform: synthetic e-commerce
 events are published to Apache Kafka and processed by independent workers into PostgreSQL with
@@ -23,12 +23,22 @@ explicit, tested delivery semantics. The design is in
 - **Run reconciliation:** every run's producer outcomes (acknowledged, definitely failed,
   ambiguously failed) are checked against the ledger after the topic drains — PASS, FAIL or
   INCOMPLETE, with duplicates reported separately.
-- **Crash-recovery tests:** a real worker JVM is killed with `Runtime.halt()` before and after the
-  database commit; both recover with no lost and no doubly applied event. Claims and their tests:
-  [`docs/reliability.md`](docs/reliability.md).
+- **Failure handling:** failures are classified as bad record (dead-lettered immediately), transient
+  (3 attempts in place, then dead-lettered) or infrastructure (retried until the dependency returns;
+  never dead-lettered, so a database outage pauses processing instead of flooding the dead-letter topic).
+  A record's offset is committed only after its dead-letter record is acknowledged.
+- **Dead letters and replay:** dead letters are stored in PostgreSQL with their original topic,
+  partition, offset, bytes and failure reason; operators inspect, replay (original event identity, so
+  replay is idempotent) or discard them through the REST API ([`docs/api.md`](docs/api.md)), behind an
+  operator key and a rate limit.
+- **Crash-recovery tests:** real JVMs are killed with `Runtime.halt()` before and after the database
+  commit, after a dead-letter publication, and in the middle of a replay; each recovers with no lost and
+  no doubly applied event. Every claim maps to a test: [`docs/reliability.md`](docs/reliability.md).
+- **Retention:** event partitions, ledger rows, aggregates and resolved dead letters expire on schedule,
+  without ever breaking the deduplication window or deleting unresolved recovery evidence.
 - **Runtime roles** of one Spring Boot 4 application: `migrate` (schema, topics, consumer-group
-  offsets), `worker` (processing, heartbeats), `generate` (one seeded run, then reconcile),
-  `api` (`GET /api/v1/system/status`).
+  offsets), `worker` (processing, dead-letter ingestion, heartbeats), `generate` (one seeded run, then
+  reconcile), `api` (status, dead-letter inspection and replay, retention maintenance).
 - **React dashboard** with one page, System Status, refreshed every 5 seconds from the real API.
 - **Docker Compose** stack and **GitHub Actions CI** that runs every integration test and a Compose
   smoke test publishing a run that must reconcile as PASS.
@@ -62,10 +72,10 @@ compose.yaml
 
 ## Limitations (current)
 
-- No dead-letter topic or retry classification yet: a record that can never be processed stalls
-  its partition (and the other partition on the same consumer thread) instead of being skipped.
-- Local use only: no authentication; a single Kafka broker with replication factor 1.
-- Retention jobs (ledger, old event partitions) are not implemented yet.
+- Per-key order is not preserved for events that are dead-lettered and replayed.
+- Local use only: no user authentication (operator actions need a key); a single Kafka broker with
+  replication factor 1.
+- No dashboard for dead letters yet (Phase 4); they are managed through the REST API.
 - No performance figures are published until they are measured (Phase 5).
 
 ## License

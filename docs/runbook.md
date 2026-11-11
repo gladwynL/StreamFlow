@@ -123,6 +123,56 @@ exited with code 255. Before running integration tests or the full stack:
 - close heavy applications (game engines, many browser tabs);
 - run one heavy process at a time (integration tests *or* the Compose stack, not both).
 
+## Failures, dead letters and recovery
+
+How a worker handles a failed record (ADR-0006, [`reliability.md`](reliability.md)):
+
+| Failure | What happens |
+|---|---|
+| Bad record (undecodable, invalid) | Dead-lettered immediately; the partition moves on |
+| Transient (serialization conflict, deadlock, lock or statement timeout, unknown error) | Up to 3 attempts in place, then dead-lettered |
+| Infrastructure (PostgreSQL unreachable) | Retried without limit (back-off capped at 10 s); the partition waits and resumes by itself; nothing is dead-lettered |
+
+Dead letters land in the `.dlt` topic and are copied into `dead_letter_events`. Inspect them through the API
+([`api.md`](api.md)):
+
+```bash
+curl -s "http://localhost:8080/api/v1/dead-letters?status=PENDING&limit=20"
+curl -s http://localhost:8080/api/v1/dead-letters/<id>
+```
+
+**Replay and discard** need an operator key. Set `STREAMFLOW_OPERATOR_KEY` in `.env` (generate it like the
+password) and restart the api (`docker compose --profile app up -d api`). Fix the cause first, then:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/dead-letters/replay -H "Content-Type: application/json"   -H "X-StreamFlow-Operator-Key: <key>" -d '{"ids":[<id>]}'
+curl -s -X POST http://localhost:8080/api/v1/dead-letters/<id>/discard -H "Content-Type: application/json"   -H "X-StreamFlow-Operator-Key: <key>" -d '{"reason":"<why>"}'
+```
+
+Replay keeps the event's identity, so replaying twice never applies it twice. Dead letters older than 7 days cannot
+be replayed (they become `EXPIRED`); expired and pending dead letters are never deleted automatically.
+
+**Worker metrics** are on each worker's management port (`/actuator/metrics`; not published by Docker Compose —
+use `docker compose exec worker wget -qO- http://127.0.0.1:8081/actuator/metrics/<name>`):
+`streamflow.processing.failures` (tag `category`), `streamflow.deadletters.published`,
+`streamflow.deadletters.publish.failures`, `streamflow.deadletters.ingested`,
+`streamflow.deadletters.ingestion.failures`, `streamflow.infrastructure.outage`,
+`streamflow.infrastructure.recoveries`, `streamflow.consumer.rebalances`, `streamflow.consumer.errors`.
+
+**Consumer position deleted by retention.** If a worker was down longer than the topic retention (24 hours, or less
+under heavy traffic because of the 1 GiB per-partition cap), its committed offset can point at deleted records. The
+worker does not skip ahead: it logs "out of range … no reset policy is configured" and counts
+`streamflow.consumer.errors`. Recovering is a deliberate decision because the deleted events are lost (the run's
+reconciliation will report them missing). With every worker stopped:
+
+```bash
+docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server kafka:9092   --group streamflow-processor --topic streamflow.events.v1 --reset-offsets --to-earliest --execute
+```
+
+**Fault injection** (tests and demonstrations only) is off unless a worker runs with
+`STREAMFLOW_FAULT_INJECTION_ENABLED=true`. Scenarios are rows in `fault_scenarios`, limited to two predefined kinds
+(`REJECT_EVENT_TYPE`, `TRANSIENT_FAILURES`) and to at most ten minutes each.
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Action |
@@ -131,7 +181,10 @@ exited with code 255. Before running integration tests or the full stack:
 | `api`/`worker` fail with a Flyway validation error | `migrate` has not run | `docker compose --profile app up migrate`, then start the others |
 | `migrate` fails with "has N partitions but 6 are specified" | Topic exists with a different partition count | Intended safety stop; recreate the topic deliberately |
 | Status page shows "No worker has sent a heartbeat" | No worker running | Start a `worker` |
-| Startup error "No StreamFlow role is active" | No or multiple role profiles | Set `SPRING_PROFILES_ACTIVE` to one of `migrate`, `api`, `worker` |
+| Startup error "No StreamFlow role is active" | No or multiple role profiles | Set `SPRING_PROFILES_ACTIVE` to one of `migrate`, `api`, `worker`, `generate` |
+| Replay returns 503 | No operator key configured | Set `STREAMFLOW_OPERATOR_KEY` in `.env` and restart the api |
+| Dead letters pile up in the topic but not in the API | Ingestion failing | Check `streamflow.deadletters.ingestion.failures` and the worker log ("Dead-letter ingestion of … failed") |
+| Lag grows, no dead letters, worker readiness DOWN | PostgreSQL unreachable (infrastructure outage) | Restore the database; processing resumes by itself |
 
 ## Measurements
 

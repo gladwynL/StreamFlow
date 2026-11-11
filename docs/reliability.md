@@ -1,21 +1,25 @@
 # Reliability: claims and the tests that prove them
 
 Every reliability claim StreamFlow makes is listed here with the automated test that verifies it
-against real Kafka and PostgreSQL. A claim without a passing test is not made. Design rationale:
-[ADR-0004](adr/0004-delivery-semantics.md), [ADR-0005](adr/0005-offset-commit-after-db-commit.md),
+against real Kafka 4.3 and PostgreSQL 18 (Testcontainers). A claim without a passing test is not made.
+Design rationale: [ADR-0004](adr/0004-delivery-semantics.md), [ADR-0005](adr/0005-offset-commit-after-db-commit.md),
+[ADR-0006](adr/0006-failure-classification.md), [ADR-0007](adr/0007-dead-letters-and-replay.md),
 [ADR-0008](adr/0008-retention-and-backlog-window.md), [ADR-0009](adr/0009-run-reconciliation.md).
+Observed values from the runs: [`verification/spring-kafka-behavior.md`](verification/spring-kafka-behavior.md).
 
 ## Delivery model
 
-**At-least-once delivery with duplicate-free effects in PostgreSQL.** Each event's effects (event
-row, minute aggregate, run statistics) are written in the same transaction as its row in the
-deduplication ledger (`processed_events`, primary key `event_id`). A redelivered event conflicts on
-the ledger and changes nothing except the duplicate-delivery counter. Kafka offsets are committed
-only after the database transactions of their records have committed.
+**At-least-once delivery with duplicate-free effects in PostgreSQL.** Each event's effects (event row, minute
+aggregate, run statistics) are written in the same transaction as its row in the deduplication ledger
+(`processed_events`, primary key `event_id`). A redelivered or replayed event conflicts on the ledger and changes
+nothing except the duplicate-delivery counter. Kafka offsets are committed only after the database transactions of
+their records, or — for a record that is dead-lettered — after the dead-letter record is acknowledged.
 
-StreamFlow does **not** claim exactly-once delivery.
+**Every failed record ends in exactly one of three places:** processed after a retry, stored as a dead letter, or
+still waiting (infrastructure outage). None is skipped. StreamFlow does **not** claim exactly-once delivery and uses
+no Kafka transactions.
 
-## Claims (Phase 2)
+## Processing and delivery (Phase 2)
 
 | # | Claim | Verified by |
 |---|---|---|
@@ -23,30 +27,52 @@ StreamFlow does **not** claim exactly-once delivery.
 | 2 | The same seed reproduces identical event content (SHA-256 over 100,000 events); runs never share event ids or timestamps | `EventContentGeneratorTest`, `GenerateRoleIT` |
 | 3 | An event delivered twice takes effect once; the second delivery is counted as a suppressed duplicate | `DuplicateDeliveryIT` |
 | 4 | Concurrent processing of the same event by several transactions applies it exactly once | `ConcurrentProcessingIT` |
-| 5 | A worker crash **before** the database commit loses nothing: the transaction rolls back, the offset is not committed, and the event is processed once after restart | `CrashRecoveryIT` |
-| 6 | A worker crash **after** the database commit and before the offset commit duplicates nothing: the record is redelivered and suppressed by the ledger | `CrashRecoveryIT` |
+| 5 | A worker crash **before** the database commit loses nothing; the event is processed once after restart | `CrashRecoveryIT` |
+| 6 | A worker crash **after** the database commit and before the offset commit duplicates nothing | `CrashRecoveryIT` |
 | 7 | Workers joining (rebalance) and leaving gracefully lose nothing and cause no redelivery | `WorkerRestartIT` |
-| 8 | A record that can never be processed stalls its partition; it is never skipped, and partitions owned by other consumer threads keep flowing (Phase 2 behaviour until the dead-letter topic in Phase 3; partitions on the *same* thread are blocked too — see the head-of-line finding) | `PartitionStallIT` |
-| 9 | Reconciliation distinguishes PASS, FAIL and INCOMPLETE; a run whose generator did not finish, or whose topic has not drained, can never pass | `ReconciliationReportTest` |
-| 10 | Every role refuses to start if ledger retention is shorter than the longest redelivery or replay window plus a margin | `RetentionPolicyCheckTest` |
-| 11 | The processing group has a committed offset on every partition from the start, so `auto.offset.reset=none` never silently skips data | `MigrateRoleIT` |
+| 8 | Every role refuses to start if ledger retention is shorter than the longest redelivery or replay window plus a margin | `RetentionPolicyCheckTest` |
+| 9 | The processing and ingestion groups have a committed offset on every partition from the start | `MigrateRoleIT` |
 
-Observed values from the test runs (offsets, duplicate counts) are recorded in
-[`verification/spring-kafka-behavior.md`](verification/spring-kafka-behavior.md).
+## Failure handling and recovery (Phase 3)
+
+| # | Claim | Verified by |
+|---|---|---|
+| 10 | Failures are classified as bad record, transient, or infrastructure; unknown failures are treated as transient (bounded, then dead-lettered) | `FailureClassifierTest` |
+| 11 | A bad record (undecodable or invalid) is dead-lettered on its first attempt with its original topic, partition, offset, key, value bytes, identity headers, exception class, message and category; processing of the partition continues, and partitions sharing its consumer thread are not blocked | `DeadLetterIT` |
+| 12 | A transient failure is retried in place and succeeds without a dead letter; one that persists is dead-lettered after exactly the configured attempts (3) as TRANSIENT | `RetryIT`, `RetryPolicyTest` |
+| 13 | A PostgreSQL outage produces no dead letters: processing pauses with capped back-off, the consumer stays in its group (no rebalance), and processing resumes by itself; the run reconciles with every event applied once | `DatabaseOutageIT` |
+| 14 | If dead-letter publication fails, the source offset is not committed and nothing after the record is processed; once publication succeeds the dead letter is published once and the partition moves on | `DeadLetterPublishFailureIT` |
+| 15 | A crash after the dead-letter acknowledgement and before the source offset commit republishes the dead letter, but PostgreSQL stores it once | `CrashRecoveryIT` |
+| 16 | Replaying a dead letter applies its event once; a REPLAYED, DISCARDED or EXPIRED dead letter cannot be replayed; a second publication of the same event is suppressed by the ledger | `ReplayIT` |
+| 17 | Concurrent replay requests for the same dead letters replay each exactly once, without deadlock | `ReplayIT` |
+| 18 | A replay interrupted by an api crash between publication and the REPLAYED update is recovered: the claim survives, the sweeper releases it, and replaying again leaves one effect | `ReplayCrashIT` |
+| 19 | Dead letters older than the 7-day replay window are rejected for replay and become EXPIRED | `ReplayIT`, `RetentionIT` |
+| 20 | Retention deletes ledger rows only outside the 8-day window and only for runs with a final reconciliation; never deletes unresolved dead letters; drops event partitions and aggregates after their retention | `RetentionIT` |
+| 21 | Reconciliation counts processed, replayed, unresolved, discarded and ambiguous events once each; an open replay keeps a run INCOMPLETE; missing and unexpected events make it FAIL | `ReplayIT`, `ReconciliationIT`, `ReconciliationReportTest` |
+| 22 | A position deleted by retention (out of range) is reported, and the consumer never skips to the new log start | `OffsetOutOfRangeIT` |
+| 23 | Replay and discard require the operator key (503 when not configured, 401 when wrong) and are rate-limited (429) | `OperatorGuardTest` |
+| 24 | Header values that are not printable UTF-8 are stored as Base64, never as text PostgreSQL rejects | `DeadLetterIngestionTest`, `DeadLetterIT` |
 
 ## Boundaries of the claims
 
-- **Single broker, replication factor 1.** Durability of acknowledged events depends on the broker's
-  disk and the OS flushing it. Losing the disk, or a crash of the Docker VM or host before a flush,
-  can lose acknowledged events. Broker replication is out of scope for the local deployment.
-- **Backlog window.** Kafka can delete unconsumed records once a partition exceeds 1 GiB
-  (size-based retention), possibly well before the 24-hour time limit. The window W = min(24 h,
-  (1 GiB − 128 MiB) ÷ peak per-partition ingress) is measured in Phase 5. Beyond it, events can be
-  lost; the consumer then fails loudly (`auto.offset.reset=none`) and reconciliation reports the gap.
-- **Deduplication window.** Duplicates are suppressed while ledger rows exist (8 days). Ledger
-  retention jobs arrive in Phase 3; until then ledger rows are never deleted.
-- **Producer buffer.** Events in the producer's memory when the generator crashes were never
-  acknowledged and are outside the claims; the run stays `RUNNING` and can never reconcile as PASS.
-- **Phase 2 failure handling.** A record that can never be processed blocks its partition — and
-  every other partition owned by the same consumer thread — indefinitely. Phase 3 replaces this with
-  classified retries and the dead-letter topic.
+- **Retry counts are per partition assignment.** Spring Kafka keeps attempt counts in memory. A worker restart or
+  rebalance during retries starts the count again, so a transient record can be attempted up to
+  3 × (number of assignments) times before it is dead-lettered. It is never retried without bound unless it fails
+  for infrastructure reasons.
+- **Order after dead-lettering.** A dead-lettered event is overtaken by later events of the same key, and a replayed
+  event is processed after events published while it was dead-lettered. Per-key order holds only for events processed
+  on first delivery. Analytics are order-independent; `occurred_at` is the authoritative event time.
+- **Infrastructure outages block the partition.** By design: Kafka holds the backlog. The backlog window (below)
+  bounds how long an outage can last without losing data.
+- **Single broker, replication factor 1.** Durability of acknowledged events depends on the broker's disk and the OS
+  flushing it; losing the disk or the Docker VM before a flush can lose acknowledged events.
+- **Backlog window.** Kafka can delete unconsumed records once a partition exceeds 1 GiB (size-based retention), well
+  before 24 hours. W = min(24 h, (1 GiB − 128 MiB) ÷ peak per-partition ingress) is measured in Phase 5. Beyond it the
+  consumer reports an out-of-range error instead of skipping (claim 22) and reconciliation reports the gap; recovery is
+  a deliberate operator step (runbook).
+- **Deduplication window.** Duplicates are suppressed while ledger rows exist: at least 8 days, longer for runs that
+  were never finally reconciled.
+- **Undecodable records without identity headers** cannot be replayed (no event id to deduplicate on); they can only
+  be inspected and discarded.
+- **Producer buffer.** Events in the producer's memory when the generator crashes were never acknowledged and are
+  outside the claims; such a run stays `RUNNING` and can never reconcile as PASS.
