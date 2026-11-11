@@ -11,9 +11,15 @@
 
     <artifactId>streamflow-events</artifactId>
     <name>StreamFlow Events</name>
-    <description>Event contracts shared by every StreamFlow role. Plain Java, no Spring.</description>
+    <description>Event contracts shared by every StreamFlow role. Plain Java and Jackson, no Spring.</description>
 
     <dependencies>
+        <!-- Version managed by the Spring Boot BOM inherited from the parent. -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
