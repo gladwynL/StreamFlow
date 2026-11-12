@@ -95,21 +95,20 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <executions>
-                    <!-- The reliability suite again, with workers in batch processing mode (ADR-0013). -->
+                    <!-- The reliability suite again, with workers in the record (reference) processing mode (ADR-0013). -->
                     <execution>
-                        <id>batch-mode-it</id>
+                        <id>record-mode-it</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <reportsDirectory>${project.build.directory}/failsafe-reports-batch</reportsDirectory>
-                            <summaryFile>${project.build.directory}/failsafe-reports-batch/failsafe-summary.xml</summaryFile>
+                            <reportsDirectory>${project.build.directory}/failsafe-reports-record</reportsDirectory>
+                            <summaryFile>${project.build.directory}/failsafe-reports-record/failsafe-summary.xml</summaryFile>
                             <systemPropertyVariables>
-                                <streamflow.it.processing-mode>BATCH</streamflow.it.processing-mode>
+                                <streamflow.it.processing-mode>RECORD</streamflow.it.processing-mode>
                             </systemPropertyVariables>
                             <includes>
-                                <include>**/BatchProcessingIT.java</include>
                                 <include>**/CrashRecoveryIT.java</include>
                                 <include>**/DuplicateDeliveryIT.java</include>
                                 <include>**/DatabaseOutageIT.java</include>

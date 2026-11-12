@@ -48,8 +48,8 @@ public record StreamflowProperties(
             @DefaultValue("120s") Duration dashboardDuration) {}
 
     /**
-     * RECORD: one database transaction per record (the reference mode). BATCH: one transaction per poll batch with a
-     * record-by-record fallback on failure (ADR-0013).
+     * BATCH (the default since Phase 5): one transaction per poll batch with a record-by-record fallback on failure.
+     * RECORD: one database transaction per record, kept as the reference mode. See ADR-0013 and docs/benchmarks.
      */
     public enum ProcessingMode {
         RECORD,
@@ -131,7 +131,7 @@ public record StreamflowProperties(
             @DefaultValue("3") int concurrency,
             @DefaultValue("500") int maxPollRecords,
             @DefaultValue Retry retry,
-            @DefaultValue("RECORD") ProcessingMode processingMode) {
+            @DefaultValue("BATCH") ProcessingMode processingMode) {
 
         /** A worker counts as live if its last heartbeat is newer than three heartbeat intervals. */
         public Duration liveThreshold() {

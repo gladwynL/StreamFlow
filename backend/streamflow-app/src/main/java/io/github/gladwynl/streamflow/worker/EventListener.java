@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 /** Record mode: feeds each record of the event topic to the {@link EventProcessor}. */
 @Component
 @Profile("worker")
-@ConditionalOnProperty(name = "streamflow.worker.processing-mode", havingValue = "RECORD", matchIfMissing = true)
+@ConditionalOnProperty(name = "streamflow.worker.processing-mode", havingValue = "RECORD")
 class EventListener {
 
     static final String LISTENER_ID = "event-processor";

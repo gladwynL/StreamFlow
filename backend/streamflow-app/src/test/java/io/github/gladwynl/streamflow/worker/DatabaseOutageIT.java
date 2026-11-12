@@ -3,6 +3,7 @@ package io.github.gladwynl.streamflow.worker;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import io.github.gladwynl.streamflow.events.EventEnvelope;
 import io.github.gladwynl.streamflow.processing.FailureCategory;
 import io.github.gladwynl.streamflow.reconciliation.ReconciliationReport;
 import io.github.gladwynl.streamflow.reconciliation.ReconciliationReport.Result;
@@ -11,7 +12,9 @@ import io.github.gladwynl.streamflow.simulation.SimulationSpec;
 import io.github.gladwynl.streamflow.support.IntegrationTestInfrastructure;
 import io.github.gladwynl.streamflow.support.Pipeline;
 import io.github.gladwynl.streamflow.support.PipelineTools;
+import io.github.gladwynl.streamflow.support.TestRecords;
 import java.time.Duration;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -24,6 +27,7 @@ class DatabaseOutageIT {
 
     private static final Pipeline PIPELINE = IntegrationTestInfrastructure.provision(Pipeline.named("outage"));
     private static final int EVENTS = 20_000;
+    private static final int LATE_EVENTS = 2_000;
 
     @Test
     void anOutagePausesProcessingWithoutDeadLettersAndProcessingResumesAfterRecovery() throws Exception {
@@ -46,7 +50,14 @@ class DatabaseOutageIT {
                         .until(() -> metrics.processed.count() >= 1);
 
                 IntegrationTestInfrastructure.pausePostgres();
+                UUID lateRun = UUID.randomUUID();
                 try {
+                    // Kafka keeps working while the database is frozen: events published now must reach the workers
+                    // during the outage whatever the processing mode (batch mode may already have drained the run).
+                    for (EventEnvelope event : TestRecords.events(lateRun, 42, LATE_EVENTS)) {
+                        tools.producer().send(TestRecords.record(PIPELINE.eventsTopic(), event));
+                    }
+                    tools.producer().flush();
                     // Observable outage: every consumer thread fails with infrastructure errors and backs off.
                     await().atMost(Duration.ofSeconds(60))
                             .until(() -> metrics.inOutage() && metrics.failures(FailureCategory.INFRASTRUCTURE) >= 6);
@@ -59,6 +70,13 @@ class DatabaseOutageIT {
 
                 ReconciliationReport report =
                         tools.reconciliation().awaitDrainAndReconcile(run.runId(), Duration.ofSeconds(180));
+                assertThat(tools.jdbc()
+                                .sql("SELECT count(*) FROM processed_events WHERE run_id = :r")
+                                .param("r", lateRun)
+                                .query(Long.class)
+                                .single())
+                        .as("the events published during the outage are each applied once after it")
+                        .isEqualTo(LATE_EVENTS);
 
                 assertThat(report.result()).as(report.reasons().toString()).isEqualTo(Result.PASS);
                 assertThat(report.processed()).isEqualTo(EVENTS);

@@ -110,11 +110,12 @@ public final class IntegrationTestInfrastructure {
     }
 
     /**
-     * The worker processing mode of this test run: RECORD unless the system property {@value #PROCESSING_MODE} is set
-     * (the {@code batch-mode-it} failsafe execution reruns the reliability tests with BATCH).
+     * The worker processing mode of this test run: BATCH unless the system property {@value #PROCESSING_MODE} is set
+     * (the default mode is BATCH, as in production; the {@code record-mode-it} failsafe execution reruns the reliability
+     * tests in the RECORD reference mode).
      */
     public static String processingMode() {
-        return System.getProperty(PROCESSING_MODE, "RECORD");
+        return System.getProperty(PROCESSING_MODE, "BATCH");
     }
 
     /** The run's processing mode, unless the test chose one itself (a repeated argument would be ambiguous). */

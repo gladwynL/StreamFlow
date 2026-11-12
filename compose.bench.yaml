@@ -39,7 +39,7 @@ services:
     environment:
       <<: *bench-names
       STREAMFLOW_WORKER_CONCURRENCY: ${BENCH_CONCURRENCY:-3}
-      STREAMFLOW_WORKER_PROCESSING_MODE: ${BENCH_PROCESSING_MODE:-RECORD}
+      STREAMFLOW_WORKER_PROCESSING_MODE: ${BENCH_PROCESSING_MODE:-BATCH}
       STREAMFLOW_FAULT_INJECTION_ENABLED: ${BENCH_FAULT_INJECTION:-false}
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError ${BENCH_WORKER_JAVA_OPTS:-}
     # A benchmark must observe crashes, not hide them behind restarts.

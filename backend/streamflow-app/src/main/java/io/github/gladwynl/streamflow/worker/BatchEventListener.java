@@ -13,12 +13,12 @@ import org.springframework.kafka.support.TopicPartitionOffset;
 import org.springframework.stereotype.Component;
 
 /**
- * Batch mode (ADR-0013): feeds each poll batch of the event topic to the {@link BatchEventProcessor}. A failed record
+ * Batch mode (ADR-0013, the default): feeds each poll batch of the event topic to the {@link BatchEventProcessor}. A failed record
  * is reported to the error handler by index, so only the offsets of the committed records before it are committed.
  */
 @Component
 @Profile("worker")
-@ConditionalOnProperty(name = "streamflow.worker.processing-mode", havingValue = "BATCH")
+@ConditionalOnProperty(name = "streamflow.worker.processing-mode", havingValue = "BATCH", matchIfMissing = true)
 class BatchEventListener {
 
     private final BatchEventProcessor processor;
