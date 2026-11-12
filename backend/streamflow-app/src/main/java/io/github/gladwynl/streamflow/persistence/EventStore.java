@@ -40,16 +40,43 @@ public class EventStore {
                 == 1;
     }
 
-    public void insertEvent(
+    /**
+     * Writes every effect of a first delivery — the event row, its per-minute aggregate, its latency histogram bucket
+     * and the run statistics — in one statement (data-modifying CTEs), so the record costs one round trip here
+     * instead of four. Same tables, keys, conflict handling and transaction as separate statements; all parts see the
+     * same snapshot and {@code now()}. Latency is the transaction start minus the Kafka append time (database clock),
+     * counted into the bucket whose bounds below it number {@code bucket_index}.
+     */
+    public void applyFirstDelivery(
             EventEnvelope event, String payloadJson, Instant kafkaTimestamp, int partition, long offset) {
+        Long amount = amountCents(event.payload());
         jdbc.sql("""
-                        INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset,
-                                            run_id, run_seq, user_id, session_id, synthetic, amount_cents, currency,
-                                            payload)
-                        VALUES (:eventId, :eventType, :occurredAt, :kafkaTs, :partition, :offset,
-                                :runId, :runSeq, :userId, :sessionId, :synthetic, :amountCents, :currency,
-                                CAST(:payload AS jsonb))
-                        """)
+                        WITH event_row AS (
+                            INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition,
+                                                kafka_offset, run_id, run_seq, user_id, session_id, synthetic,
+                                                amount_cents, currency, payload)
+                            VALUES (:eventId, :eventType, :occurredAt, :kafkaTs, :partition, :offset, :runId, :runSeq,
+                                    :userId, :sessionId, :synthetic, :amountCents, :currency, CAST(:payload AS jsonb))),
+                        minute_stats AS (
+                            INSERT INTO event_stats_minute (bucket_start, event_type, kafka_partition, event_count,
+                                                            amount_cents)
+                            VALUES (date_trunc('minute', now()), :eventType, :partition, 1, :amountTotal)
+                            ON CONFLICT (bucket_start, event_type, kafka_partition) DO UPDATE
+                            SET event_count = event_stats_minute.event_count + 1,
+                                amount_cents = event_stats_minute.amount_cents + EXCLUDED.amount_cents),
+                        latency AS (
+                            INSERT INTO latency_stats_minute (bucket_start, kafka_partition, bucket_index, event_count)
+                            SELECT date_trunc('minute', now()), :partition,
+                                   (SELECT count(*) FROM unnest(%s) AS bound WHERE bound < sample.latency_ms), 1
+                            FROM (SELECT greatest(0, floor(extract(epoch FROM now() - :kafkaTs) * 1000))::bigint
+                                         AS latency_ms) sample
+                            ON CONFLICT (bucket_start, kafka_partition, bucket_index) DO UPDATE
+                            SET event_count = latency_stats_minute.event_count + 1)
+                        INSERT INTO run_stats (run_id, kafka_partition, processed, duplicates_suppressed)
+                        VALUES (:runId, :partition, 1, 0)
+                        ON CONFLICT (run_id, kafka_partition) DO UPDATE
+                        SET processed = run_stats.processed + 1
+                        """.formatted(LATENCY_BOUNDS_SQL))
                 .param("eventId", event.eventId())
                 .param("eventType", event.eventType().name())
                 .param("occurredAt", Timestamp.from(event.occurredAt()))
@@ -61,44 +88,10 @@ public class EventStore {
                 .param("userId", event.userId())
                 .param("sessionId", event.sessionId())
                 .param("synthetic", event.synthetic())
-                .param("amountCents", amountCents(event.payload()))
+                .param("amountCents", amount)
+                .param("amountTotal", amount == null ? 0L : amount)
                 .param("currency", currency(event.payload()))
                 .param("payload", payloadJson)
-                .update();
-    }
-
-    /** Adds the event to its per-minute, per-type, per-partition aggregate. */
-    public void addToMinuteStats(EventEnvelope event, int partition) {
-        Long amount = amountCents(event.payload());
-        jdbc.sql("""
-                        INSERT INTO event_stats_minute (bucket_start, event_type, kafka_partition, event_count, amount_cents)
-                        VALUES (date_trunc('minute', now()), :eventType, :partition, 1, :amount)
-                        ON CONFLICT (bucket_start, event_type, kafka_partition) DO UPDATE
-                        SET event_count = event_stats_minute.event_count + 1,
-                            amount_cents = event_stats_minute.amount_cents + EXCLUDED.amount_cents
-                        """)
-                .param("eventType", event.eventType().name())
-                .param("partition", partition)
-                .param("amount", amount == null ? 0L : amount)
-                .update();
-    }
-
-    /**
-     * Counts the event's processing latency (transaction start − Kafka append time, database clock) into the
-     * per-minute histogram. The bucket index is the number of bucket bounds below the latency.
-     */
-    public void addLatency(Instant kafkaTimestamp, int partition) {
-        jdbc.sql("""
-                        INSERT INTO latency_stats_minute (bucket_start, kafka_partition, bucket_index, event_count)
-                        SELECT date_trunc('minute', now()), :partition,
-                               (SELECT count(*) FROM unnest(%s) AS bound WHERE bound < sample.latency_ms), 1
-                        FROM (SELECT greatest(0, floor(extract(epoch FROM now() - :kafkaTs) * 1000))::bigint
-                                     AS latency_ms) sample
-                        ON CONFLICT (bucket_start, kafka_partition, bucket_index) DO UPDATE
-                        SET event_count = latency_stats_minute.event_count + 1
-                        """.formatted(LATENCY_BOUNDS_SQL))
-                .param("partition", partition)
-                .param("kafkaTs", Timestamp.from(kafkaTimestamp))
                 .update();
     }
 
@@ -107,10 +100,6 @@ public class EventStore {
                     .mapToObj(Long::toString)
                     .collect(java.util.stream.Collectors.joining(","))
             + "]::bigint[]";
-
-    public void countProcessed(UUID runId, int partition) {
-        upsertRunStats(runId, partition, 1, 0);
-    }
 
     public void countDuplicate(UUID runId, int partition) {
         upsertRunStats(runId, partition, 0, 1);

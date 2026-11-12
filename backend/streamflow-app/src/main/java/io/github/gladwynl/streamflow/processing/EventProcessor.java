@@ -13,7 +13,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * Processes one Kafka record in one database transaction.
  *
- * <p>The ledger insert and every effect (event row, minute aggregate, run statistics) commit or roll back together.
+ * <p>The ledger insert and every effect (event row, minute aggregate, latency histogram, run statistics) commit or
+ * roll back together. The effects are written with one statement after the ledger insert (two round trips per
+ * record plus the commit; Phase 5 profiling, docs/benchmarks).
  * A record whose event id is already in the ledger changes nothing except the duplicate counter. The transaction has
  * committed when this method returns; the listener container commits the Kafka offset only afterwards (ADR-0005).
  *
@@ -63,11 +65,8 @@ public class EventProcessor {
             if (firstDelivery) {
                 // Injected faults roll back the ledger row like any real failure; duplicates are never failed.
                 faultInjector.apply(event, deliveryAttempt);
-                store.insertEvent(
+                store.applyFirstDelivery(
                         event, payloadJson, Instant.ofEpochMilli(record.timestamp()), partition, record.offset());
-                store.addToMinuteStats(event, partition);
-                store.addLatency(Instant.ofEpochMilli(record.timestamp()), partition);
-                store.countProcessed(event.runId(), partition);
             } else {
                 store.countDuplicate(event.runId(), partition);
             }

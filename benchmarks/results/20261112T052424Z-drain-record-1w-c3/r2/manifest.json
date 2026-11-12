@@ -1,0 +1,46 @@
+{
+  "gitCommit": "76d53307be3493265a91a4ce2f5e5dffb901d26a",
+  "gitDirty": false,
+  "imageCreated": "2026-11-12T05:23:57.135092233Z",
+  "scenarioFile": "benchmarks/scenarios/drain-record-1w-c3.env",
+  "scenario": {
+    "NAME": "drain-record-1w-c3",
+    "WORKLOAD": "backlog",
+    "EVENTS": "60000",
+    "RATE": "100000",
+    "USERS": "10000",
+    "HOT_USER_PERCENT": "0",
+    "SEED": "20261112",
+    "PARTITIONS": "6",
+    "WORKERS": "1",
+    "CONCURRENCY": "3",
+    "PROCESSING_MODE": "RECORD",
+    "DASHBOARD_CLIENTS": "0",
+    "KILL_WORKER_AFTER": "",
+    "RESTART_KILLED_AFTER": "",
+    "JFR": "0",
+    "WORKER_MEM": "512m"
+  },
+  "repetition": 2,
+  "host": {
+    "cpu": "AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics  ",
+    "os": "Microsoft Windows 11 Pro",
+    "memoryGB": "11.7"
+  },
+  "docker": {
+    "ServerVersion": "29.8.0",
+    "NCPU": 12,
+    "MemTotal": 6034173952,
+    "OperatingSystem": "Docker Desktop",
+    "KernelVersion": "6.18.33.2-microsoft-standard-WSL2"
+  },
+  "compose": "5.5.1",
+  "images": "streamflow-app:local 7988d3e406ef",
+  "containerLimits": {
+    "worker": "512m",
+    "loadgen": "768m",
+    "kafka": "1g",
+    "postgres": "768m",
+    "api": "768m"
+  }
+}

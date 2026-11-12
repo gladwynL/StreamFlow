@@ -102,7 +102,7 @@ def run_metrics(run_dir):
     partitions = observe.get("partitions") or []
     counts = [p["events"] for p in partitions]
     return {
-        "scenario": manifest["scenario"]["NAME"],
+        "scenario": manifest["scenario"]["NAME"] + " @" + manifest["gitCommit"][:7],
         "config": manifest["scenario"],
         "run": str(run_dir),
         "commit": manifest["gitCommit"][:7],
