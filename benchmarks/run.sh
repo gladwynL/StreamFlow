@@ -213,8 +213,9 @@ for REP in $(seq 1 "$REPETITIONS"); do
   export BENCH_EVENTS_TOPIC="bench.$TAG.events" BENCH_DLT_TOPIC="bench.$TAG.dlt" BENCH_GROUP="bench-$TAG"
   export BENCH_WORKER_JAVA_OPTS=""
   if [ "$JFR" = "1" ]; then
+    # Recordings must not capture the containers' environment (it holds the database password).
     rm -f benchmarks/jfr/*.jfr
-    export BENCH_WORKER_JAVA_OPTS="-XX:StartFlightRecording=filename=/jfr/worker-%t.jfr,settings=profile,dumponexit=true"
+    export BENCH_WORKER_JAVA_OPTS="-XX:StartFlightRecording=filename=/jfr/worker-%t.jfr,settings=profile,dumponexit=true,jdk.InitialEnvironmentVariable#enabled=false"
   fi
   RUN_DIR="$OUT_ROOT/r$REP"
   mkdir -p "$RUN_DIR"

@@ -38,6 +38,28 @@ class OperatorGuardTest {
         assertStatus(() -> guard.authorize("k"), HttpStatus.TOO_MANY_REQUESTS);
     }
 
+    /** Phase 6 audit: wrong keys used to be rejected before the rate limit, so guessing was unlimited. */
+    @Test
+    void rejectedKeysConsumeTheRateLimitSoGuessingIsBounded() {
+        OperatorGuard guard = new OperatorGuard(properties("the-real-key", 3));
+
+        for (int i = 0; i < 3; i++) {
+            assertStatus(() -> guard.authorize("guess"), HttpStatus.UNAUTHORIZED);
+        }
+        assertStatus(() -> guard.authorize("guess"), HttpStatus.TOO_MANY_REQUESTS);
+        assertStatus(() -> guard.authorize(null), HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @Test
+    void keysOfAnyLengthAreComparedSafely() {
+        OperatorGuard guard = new OperatorGuard(properties("k".repeat(64), 30));
+
+        assertStatus(() -> guard.authorize(""), HttpStatus.UNAUTHORIZED);
+        assertStatus(() -> guard.authorize("k".repeat(63)), HttpStatus.UNAUTHORIZED);
+        assertStatus(() -> guard.authorize("k".repeat(10_000)), HttpStatus.UNAUTHORIZED);
+        assertThatCode(() -> guard.authorize("k".repeat(64))).doesNotThrowAnyException();
+    }
+
     @Test
     void tokenBucketRefillsOverTime() throws InterruptedException {
         OperatorGuard.TokenBucket bucket = new OperatorGuard.TokenBucket(600); // 10 per second

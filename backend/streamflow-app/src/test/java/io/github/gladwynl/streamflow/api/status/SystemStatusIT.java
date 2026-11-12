@@ -69,7 +69,7 @@ class SystemStatusIT {
                 .extractingPath("$.database.serverVersion")
                 .asString()
                 .startsWith("18.");
-        assertThat(result).bodyJson().extractingPath("$.database.schemaVersion").isEqualTo("4");
+        assertThat(result).bodyJson().extractingPath("$.database.schemaVersion").isEqualTo("5");
         assertThat(result)
                 .bodyJson()
                 .extractingPath("$.workers[*].workerId")

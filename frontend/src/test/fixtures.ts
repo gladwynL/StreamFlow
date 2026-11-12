@@ -71,6 +71,7 @@ export function liveSnapshot(overrides: Partial<LiveSnapshot> = {}): LiveSnapsho
       members: 3,
       totalLag: 321,
       logEndOffset: 1_000_000,
+      retentionBytes: 1_073_741_824,
       partitions: [
         {
           partition: 0,
@@ -78,8 +79,16 @@ export function liveSnapshot(overrides: Partial<LiveSnapshot> = {}): LiveSnapsho
           committedOffset: 499_800,
           lag: 200,
           owner: 'worker-a-0',
+          sizeBytes: 55_000_000,
         },
-        { partition: 1, logEndOffset: 500_000, committedOffset: 499_879, lag: 121, owner: null },
+        {
+          partition: 1,
+          logEndOffset: 500_000,
+          committedOffset: 499_879,
+          lag: 121,
+          owner: null,
+          sizeBytes: 913_000_000,
+        },
       ],
       error: null,
     },

@@ -1,7 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { OperatorKeyProvider, useOperator } from './OperatorKey';
+import { OperatorKeyProvider } from './OperatorKey';
+import { useOperator } from './operatorContext';
 
 function Probe() {
   const { requireKey, unlocked, lock } = useOperator();

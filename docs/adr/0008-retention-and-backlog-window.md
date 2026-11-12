@@ -15,7 +15,8 @@ size-based retention can delete unconsumed data early.
 - The application refuses to start if ledger retention is shorter than the longest redelivery or
   replay window plus a margin.
 - Supported backlog window W = min(24 h, (1 GiB − 128 MiB) ÷ peak per-partition ingress bytes/s),
-  measured and published in Phase 5.
+  measured and published in Phase 5 (docs/benchmarks/README.md §8): about 110 bytes per event, so W is about
+  14 h at 1,000 events/s. Phase 6: running past W produces a recorded, paused offset gap, never a silent skip.
 - The processing group uses `auto.offset.reset=none` so a retention overrun fails loudly instead of
   skipping data.
 

@@ -50,6 +50,41 @@ public class ConsumerGroupInspector {
         this.inspector = inspector;
     }
 
+    /**
+     * Bytes stored on the broker(s) for each partition of {@code topic} (all log segments). Compared with the topic's
+     * {@code retention.bytes}, this is how close Kafka is to deleting a partition's oldest records (Phase 0 §6.2).
+     */
+    public Map<Integer, Long> partitionSizes(TopicSpec topic) {
+        List<Integer> brokers = inspector.await(admin.describeCluster().nodes(), "describe cluster").stream()
+                .map(org.apache.kafka.common.Node::id)
+                .toList();
+        Map<Integer, Long> sizes = new HashMap<>();
+        inspector
+                .await(admin.describeLogDirs(brokers).allDescriptions(), "describe log dirs")
+                .values()
+                .forEach(dirs -> dirs.values()
+                        .forEach(dir -> dir.replicaInfos().forEach((partition, info) -> {
+                            if (partition.topic().equals(topic.name())) {
+                                sizes.merge(partition.partition(), info.size(), Math::max);
+                            }
+                        })));
+        return sizes;
+    }
+
+    /** The group's committed offsets on every partition it has one for. */
+    public Map<TopicPartition, Long> committedOffsets(String groupId) {
+        Map<TopicPartition, OffsetAndMetadata> committed = inspector.await(
+                admin.listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata(),
+                "list offsets of group " + groupId);
+        Map<TopicPartition, Long> out = new HashMap<>();
+        committed.forEach((partition, offset) -> {
+            if (offset != null) {
+                out.put(partition, offset.offset());
+            }
+        });
+        return out;
+    }
+
     public GroupState describe(String groupId, TopicSpec topic) {
         ConsumerGroupDescription description = inspector
                 .await(admin.describeConsumerGroups(List.of(groupId)).all(), "describe group " + groupId)

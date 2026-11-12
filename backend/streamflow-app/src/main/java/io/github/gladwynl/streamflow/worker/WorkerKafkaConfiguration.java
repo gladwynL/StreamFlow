@@ -6,6 +6,7 @@ import io.github.gladwynl.streamflow.config.StreamflowProperties;
 import io.github.gladwynl.streamflow.config.StreamflowProperties.Retry;
 import io.github.gladwynl.streamflow.deadletter.DeadLetterHeaders;
 import io.github.gladwynl.streamflow.kafka.TopicCatalog;
+import io.github.gladwynl.streamflow.persistence.OffsetGapRepository;
 import io.github.gladwynl.streamflow.processing.CrashInjector;
 import io.github.gladwynl.streamflow.processing.FailureCategory;
 import io.github.gladwynl.streamflow.processing.FailureClassifier;
@@ -13,10 +14,14 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.InvalidOffsetException;
+import org.apache.kafka.clients.consumer.OffsetOutOfRangeException;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -106,7 +111,8 @@ class WorkerKafkaConfiguration {
             TopicCatalog topics,
             KafkaTemplate<String, byte[]> deadLetterTemplate,
             CrashInjector crashInjector,
-            WorkerMetrics metrics) {
+            WorkerMetrics metrics,
+            OffsetGapRepository offsetGaps) {
         AtomicReference<DefaultErrorHandler> handlerRef = new AtomicReference<>();
         DeadLetterPublishingRecoverer publisher =
                 deadLetterPublisher(deadLetterTemplate, topics.deadLetter().name(), handlerRef);
@@ -118,7 +124,7 @@ class WorkerKafkaConfiguration {
             crashInjector.afterDeadLetterPublished(record);
         };
 
-        ClassifiedErrorHandler handler = new ClassifiedErrorHandler(recoverer, metrics);
+        ClassifiedErrorHandler handler = new ClassifiedErrorHandler(recoverer, metrics, offsetGaps);
         handler.setBackOffFunction((record, failure) ->
                 backOff(FailureClassifier.classify(failure), properties.worker().retry()));
         handler.setResetStateOnExceptionChange(true);
@@ -162,7 +168,10 @@ class WorkerKafkaConfiguration {
 
     @Bean(DEAD_LETTER_CONTAINER_FACTORY)
     ConcurrentKafkaListenerContainerFactory<String, byte[]> deadLetterListenerContainerFactory(
-            KafkaProperties kafka, StreamflowProperties properties, WorkerMetrics metrics) {
+            KafkaProperties kafka,
+            StreamflowProperties properties,
+            WorkerMetrics metrics,
+            OffsetGapRepository offsetGaps) {
         ConcurrentKafkaListenerContainerFactory<String, byte[]> factory =
                 containerFactory(kafka, properties.worker().maxPollRecords(), metrics);
         factory.setConcurrency(1);
@@ -172,7 +181,8 @@ class WorkerKafkaConfiguration {
                 (record, failure) -> {
                     throw new IllegalStateException("Dead-letter ingestion never gives up on a record", failure);
                 },
-                metrics);
+                metrics,
+                offsetGaps);
         handler.setBackOffFunction((record, failure) -> unlimited(retry));
         handler.setRetryListeners((record, failure, attempt) -> {
             metrics.ingestionFailures.increment();
@@ -275,14 +285,22 @@ class WorkerKafkaConfiguration {
         return backOff;
     }
 
-    /** Counts consumer-level errors (for example an out-of-range position) before the default handling. */
+    /**
+     * The error handler of both listener containers: classified retries and recovery of failed records (above), and
+     * the handling of consumer-level errors, in particular positions that Kafka no longer holds.
+     */
     static final class ClassifiedErrorHandler extends DefaultErrorHandler {
 
-        private final WorkerMetrics metrics;
+        private static final Duration LOG_START_TIMEOUT = Duration.ofSeconds(5);
 
-        ClassifiedErrorHandler(ConsumerRecordRecoverer recoverer, WorkerMetrics metrics) {
+        private final WorkerMetrics metrics;
+        private final OffsetGapRepository offsetGaps;
+
+        ClassifiedErrorHandler(
+                ConsumerRecordRecoverer recoverer, WorkerMetrics metrics, OffsetGapRepository offsetGaps) {
             super(recoverer);
             this.metrics = metrics;
+            this.offsetGaps = offsetGaps;
         }
 
         /**
@@ -297,6 +315,45 @@ class WorkerKafkaConfiguration {
         @Override
         public void clearThreadState() {}
 
+        /**
+         * Batch mode: a batch failure that is not a {@code BatchListenerFailedException} (for example the offset
+         * commit after a successful batch failing during a broker outage or rebalance) would otherwise be retried in
+         * memory by Spring Kafka's fallback, which pauses the consumer's whole assignment while it retries; when a
+         * rebalance happens meanwhile, the reassigned partitions were left without consumption (KafkaOutageIT,
+         * Phase 6). Such failures are reported as a failure of the batch's first record instead: nothing more is
+         * committed, every partition of the batch is sought back and redelivered, and records that had already
+         * committed are suppressed by the ledger. The classified back-off applies (Kafka failures are
+         * infrastructure, retried without limit and never dead-lettered).
+         */
+        @Override
+        public void handleBatch(
+                Exception thrownException,
+                ConsumerRecords<?, ?> data,
+                Consumer<?, ?> consumer,
+                MessageListenerContainer container,
+                Runnable invokeListener) {
+            Exception failure = thrownException;
+            if (data.count() > 0 && !hasBatchFailureIndex(thrownException)) {
+                log.warn(
+                        "Batch of {} records on {} failed outside record processing; redelivering it: {}",
+                        data.count(),
+                        container.getListenerId(),
+                        MetricsRetryListener.rootMessage(thrownException));
+                failure =
+                        new BatchListenerFailedException("Batch failed outside record processing", thrownException, 0);
+            }
+            super.handleBatch(failure, data, consumer, container, invokeListener);
+        }
+
+        private static boolean hasBatchFailureIndex(Throwable failure) {
+            for (Throwable t = failure; t != null; t = t.getCause() == t ? null : t.getCause()) {
+                if (t instanceof BatchListenerFailedException) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         @Override
         public void handleOtherException(
                 Exception thrownException,
@@ -304,8 +361,73 @@ class WorkerKafkaConfiguration {
                 MessageListenerContainer container,
                 boolean batchListener) {
             metrics.consumerErrors.increment();
+            InvalidOffsetException lostPosition = lostPosition(thrownException);
+            if (lostPosition != null) {
+                pauseAndRecord(lostPosition, consumer, container);
+                return;
+            }
             log.error("Consumer error on {}: {}", container.getListenerId(), thrownException.toString());
             super.handleOtherException(thrownException, consumer, container, batchListener);
+        }
+
+        /**
+         * The group's position on a partition is gone (retention deleted records it had not read) or it has none.
+         * With {@code auto.offset.reset=none} the consumer would raise the same error on every poll; instead the
+         * partition is paused on this consumer, the gap is recorded as evidence, and the operator is told how to
+         * recover. Nothing is skipped and no offset is moved: recovery is a deliberate operator step
+         * (docs/runbook.md, "Offset gaps"). Other partitions continue. A rebalance hands the partition to a consumer
+         * that pauses it again after one error, so errors stay bounded by assignments, not by polls.
+         */
+        private void pauseAndRecord(
+                InvalidOffsetException lost, Consumer<?, ?> consumer, MessageListenerContainer container) {
+            Set<TopicPartition> partitions = lost.partitions();
+            consumer.pause(partitions);
+            partitions.forEach(container::pausePartition);
+            Map<TopicPartition, Long> logStart = logStartOffsets(consumer, partitions);
+            for (TopicPartition partition : partitions) {
+                Long position = lost instanceof OffsetOutOfRangeException outOfRange
+                        ? outOfRange.offsetOutOfRangePartitions().get(partition)
+                        : null;
+                Long start = logStart.get(partition);
+                metrics.offsetGaps.increment();
+                boolean recorded = true;
+                boolean first = true;
+                try {
+                    first = offsetGaps.record(
+                            container.getGroupId(), partition.topic(), partition.partition(), position, start);
+                } catch (RuntimeException e) {
+                    recorded = false;
+                    log.error("Could not record the offset gap on {} in PostgreSQL: {}", partition, e.toString());
+                }
+                String message = ("OFFSET GAP on {} for group {}: position {} is no longer in Kafka (log now starts at"
+                        + " {}{}). The partition is paused on this worker and NOTHING was skipped. Recovery needs an"
+                        + " operator: see docs/runbook.md \"Offset gaps\".");
+                Object lostEvents = position != null && start != null ? ", " + (start - position) + " events lost" : "";
+                if (first || !recorded) {
+                    log.error(message, partition, container.getGroupId(), position, start, lostEvents);
+                } else {
+                    log.warn(message, partition, container.getGroupId(), position, start, lostEvents);
+                }
+            }
+        }
+
+        private static InvalidOffsetException lostPosition(Throwable failure) {
+            for (Throwable t = failure; t != null; t = t.getCause() == t ? null : t.getCause()) {
+                if (t instanceof InvalidOffsetException invalid) {
+                    return invalid;
+                }
+            }
+            return null;
+        }
+
+        private static Map<TopicPartition, Long> logStartOffsets(
+                Consumer<?, ?> consumer, Set<TopicPartition> partitions) {
+            try {
+                return consumer.beginningOffsets(partitions, LOG_START_TIMEOUT);
+            } catch (RuntimeException e) {
+                log.warn("Could not read the log start offsets of {}: {}", partitions, e.toString());
+                return Map.of();
+            }
         }
     }
 

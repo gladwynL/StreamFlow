@@ -59,7 +59,7 @@ PostgreSQL in the benchmark stack has the same settings as the development stack
 | `PROCESSING_MODE` | `RECORD` (one transaction per record) or `BATCH` (one per poll batch, ADR-0013) | `RECORD` |
 | `DASHBOARD_CLIENTS` | Live-feed WebSocket clients held open during the run (requires the api) | 0 |
 | `KILL_WORKER_AFTER`, `RESTART_KILLED_AFTER` | Kill one worker (SIGKILL) this many seconds after the workers started; restart it after a delay | — |
-| `JFR` | 1 = record Java Flight Recorder on the worker (profiling runs only; not used for throughput figures) | 0 |
+| `JFR` | 1 = record Java Flight Recorder on the worker (profiling runs only; not used for throughput figures). Recordings exclude environment variables. | 0 |
 | `WORKER_MEM` | Memory limit per worker container | 512m |
 
 ## Metrics and how they are measured

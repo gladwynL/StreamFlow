@@ -81,6 +81,27 @@ claim above holds in both modes: the reliability suite runs twice in CI, once pe
 | 36 | Retry limits, dead-letter provenance and outage behaviour are the same as in record mode | `RetryIT`, `DeadLetterIT`, `DatabaseOutageIT` (both modes) |
 | 37 | Every benchmark run reconciled exactly (97 runs, including worker kills) | `docs/benchmarks/results.md`, `benchmarks/results/` |
 
+## Hardening (Phase 6)
+
+| # | Claim | Verified by |
+|---|---|---|
+| 38 | When retention deletes records a group has not read, the worker pauses only that partition after the first error (no error loop), records the gap (lost position, log start, events lost), moves no offset and skips nothing; other partitions continue; status reports the open gap; after a deliberate operator reset the surviving events are processed once, the gap stays recorded and reconciliation reports every lost event as missing | `OffsetOutOfRangeIT` (both modes) |
+| 39 | A Kafka broker outage during processing produces no dead letters; workers reconnect by themselves, events published afterwards are processed once and the run reconciles PASS | `KafkaOutageIT` (both modes) |
+| 40 | In batch mode a failed offset commit (broker outage, rebalance) redelivers the batch instead of pausing the consumer for an in-memory retry; Kafka commit and retriable broker errors are infrastructure failures, retried without limit and never dead-lettered | `KafkaOutageIT`, `FailureClassifierTest` |
+| 41 | System status warns when a partition with unread records reaches 80 % of its retention size limit | `SystemStatusTest`, `DashboardApiIT` (sizes measured) |
+
+## Concurrency checklist
+
+| Concern | How it is handled | Verified by |
+|---|---|---|
+| Two consumers hold the same record (rebalance, redelivery) | Ledger primary key; exactly one transaction applies the event | `ConcurrentProcessingIT`, `DuplicateDeliveryIT` |
+| Concurrent batches with overlapping events | Rows sorted by event id before insert (consistent lock order); a deadlock would fall back record by record | `BatchProcessingIT` |
+| Concurrent replays of the same dead letters | Claim with `SELECT … FOR UPDATE` in id order; each replayed once | `ReplayIT` |
+| Aggregate rows written by several workers | Keys include the Kafka partition, so each row has a single writer | Schema (`event_stats_minute`, `latency_stats_minute`, `run_stats`) |
+| Offset commit racing a rebalance | Commit after the database commit; a lost commit means redelivery, absorbed by the ledger | `WorkerRestartIT`, `KafkaOutageIT` |
+| Live feed and slow clients | One snapshot computation per second, per-client single in-flight send | `LiveBroadcasterTest` |
+| One simulation at a time | Compare-and-set on the active run | `DashboardApiIT` (409 on overlap) |
+
 ## Boundaries of the claims
 
 - **Retry counts are per partition assignment.** Spring Kafka keeps attempt counts in memory. A worker restart or
@@ -95,9 +116,10 @@ claim above holds in both modes: the reliability suite runs twice in CI, once pe
 - **Single broker, replication factor 1.** Durability of acknowledged events depends on the broker's disk and the OS
   flushing it; losing the disk or the Docker VM before a flush can lose acknowledged events.
 - **Backlog window.** Kafka can delete unconsumed records once a partition exceeds 1 GiB (size-based retention), well
-  before 24 hours. W = min(24 h, (1 GiB − 128 MiB) ÷ peak per-partition ingress) is measured in Phase 5. Beyond it the
-  consumer reports an out-of-range error instead of skipping (claim 22) and reconciliation reports the gap; recovery is
-  a deliberate operator step (runbook).
+  before 24 hours. W = min(24 h, (1 GiB − 128 MiB) ÷ peak per-partition ingress), measured in Phase 5 at about
+  110 bytes per event: 14 h at 1,000 events/s, 2.8 h at 5,000/s (docs/benchmarks/README.md §8). Beyond it the worker
+  pauses the partition and records the gap instead of skipping (claim 38), status warns before it (claim 41), and
+  recovery is a deliberate operator step (runbook, "Offset gaps").
 - **Deduplication window.** Duplicates are suppressed while ledger rows exist: at least 8 days, longer for runs that
   were never finally reconciled.
 - **Undecodable records without identity headers** cannot be replayed (no event id to deduplicate on); they can only

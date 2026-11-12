@@ -6,6 +6,9 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.sql.SQLException;
 import java.util.Set;
+import org.apache.kafka.clients.consumer.CommitFailedException;
+import org.apache.kafka.common.errors.RebalanceInProgressException;
+import org.apache.kafka.common.errors.RetriableException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.transaction.CannotCreateTransactionException;
 
@@ -20,7 +23,9 @@ import org.springframework.transaction.CannotCreateTransactionException;
  *       below — retried a bounded number of times, then dead-lettered rather than retried forever.
  *   <li>Infrastructure: connection errors (class {@code 08}), server shutdown or start-up ({@code 57P01}–{@code
  *       57P03}), too many connections ({@code 53300}), insufficient resources (class {@code 53}), pool or
- *       transaction-start failures, and socket timeouts.
+ *       transaction-start failures, and socket timeouts; and Kafka-side failures — a failed offset commit
+ *       ({@code CommitFailedException}, {@code RebalanceInProgressException}) or any retriable Kafka error. These are
+ *       never a record's fault: the record is redelivered and, if it had committed, suppressed by the ledger.
  * </ul>
  */
 public final class FailureClassifier {
@@ -37,6 +42,11 @@ public final class FailureClassifier {
             }
             if (t instanceof EventDecodingException || t instanceof EventValidationException) {
                 return FailureCategory.BAD_RECORD;
+            }
+            if (t instanceof CommitFailedException
+                    || t instanceof RebalanceInProgressException
+                    || t instanceof RetriableException) {
+                return FailureCategory.INFRASTRUCTURE;
             }
             if (t instanceof CannotGetJdbcConnectionException
                     || t instanceof CannotCreateTransactionException

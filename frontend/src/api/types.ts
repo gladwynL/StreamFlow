@@ -86,6 +86,7 @@ export interface KafkaView {
   members: number | null;
   totalLag: number | null;
   logEndOffset: number | null;
+  retentionBytes: number | null;
   partitions: PartitionView[] | null;
   error: string | null;
 }
@@ -96,6 +97,7 @@ export interface PartitionView {
   committedOffset: number | null;
   lag: number;
   owner: string | null;
+  sizeBytes: number | null;
 }
 
 export interface Workers {

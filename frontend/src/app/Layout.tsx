@@ -1,18 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink } from 'react-router';
-import { useLive } from '../live/LiveFeedProvider';
+import { NAV } from './nav';
+import { useLive } from '../live/liveContext';
 import type { FeedStatus } from '../live/useLiveFeed';
-import { useOperator } from '../security/OperatorKey';
-
-export const NAV = [
-  { to: '/', label: 'Overview', end: true },
-  { to: '/live', label: 'Live stream' },
-  { to: '/kafka', label: 'Kafka & processing' },
-  { to: '/analytics', label: 'Analytics' },
-  { to: '/dead-letters', label: 'Dead letters' },
-  { to: '/simulations', label: 'Simulations' },
-  { to: '/system', label: 'System' },
-];
+import { useOperator } from '../security/operatorContext';
 
 export function Layout({ children }: { children: ReactNode }) {
   return (

@@ -1,0 +1,392 @@
+openapi: 3.1.0
+info:
+  title: StreamFlow API
+  version: "1"
+  description: >
+    Local-only REST API of the StreamFlow api role (served on 127.0.0.1 through nginx at http://localhost:8080).
+    Field-level meaning of every response is documented in docs/api.md. Every value is a measurement from Kafka or
+    PostgreSQL; a value that could not be measured is null. Operator actions require the operator key and are
+    rate-limited (all attempts count, accepted or rejected). Kept in sync with the controllers by OpenApiCoverageTest.
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Docker Compose stack (nginx)
+tags:
+  - name: status
+  - name: live
+  - name: events
+  - name: analytics
+  - name: kafka
+  - name: simulations
+  - name: dead-letters
+security: []
+components:
+  securitySchemes:
+    operatorKey:
+      type: apiKey
+      in: header
+      name: X-StreamFlow-Operator-Key
+      description: The operator key configured with STREAMFLOW_API_OPERATOR_KEY. Never put it in a URL.
+  responses:
+    Problem:
+      description: RFC 9457 problem details
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    OperatorRejected:
+      description: >
+        401 missing or wrong key; 429 rate limit exceeded (every attempt counts); 503 operator actions disabled (no
+        key configured)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100 }
+    Range:
+      name: range
+      in: query
+      schema: { type: string, enum: ["15m", "1h", "6h", "24h"], default: "1h" }
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+    EventRow:
+      type: object
+      properties:
+        eventId: { type: string, format: uuid }
+        eventType: { type: string }
+        occurredAt: { type: string, format: date-time }
+        kafkaTimestamp: { type: string, format: date-time }
+        ingestedAt: { type: string, format: date-time }
+        kafkaPartition: { type: integer }
+        kafkaOffset: { type: integer, format: int64 }
+        runId: { type: string, format: uuid }
+        runSeq: { type: integer, format: int64 }
+        userId: { type: [string, "null"] }
+        sessionId: { type: [string, "null"] }
+        amountCents: { type: [integer, "null"], format: int64 }
+        currency: { type: [string, "null"] }
+        latencyMillis: { type: integer, format: int64 }
+        replayed: { type: boolean }
+    RunView:
+      type: object
+      description: A simulation run; publication, processing, duplicates and dead letters are separate fields.
+      additionalProperties: true
+      properties:
+        runId: { type: string, format: uuid }
+        status: { type: string }
+        acked: { type: integer, format: int64 }
+        processed: { type: integer, format: int64 }
+        duplicatesSuppressed: { type: integer, format: int64 }
+        deadLetters: { type: integer, format: int64 }
+        reconciliationResult: { type: [string, "null"], enum: [PASS, FAIL, INCOMPLETE, null] }
+    StartRequest:
+      type: object
+      description: Give events or durationSeconds. At most 500,000 events, 5,000 events/s, 600 s, 100,000 users.
+      required: [ratePerSecond]
+      properties:
+        seed: { type: integer, format: int64, minimum: 0 }
+        events: { type: integer, minimum: 1, maximum: 500000 }
+        durationSeconds: { type: integer, minimum: 1, maximum: 600 }
+        ratePerSecond: { type: integer, minimum: 1, maximum: 5000 }
+        users: { type: integer, minimum: 1, maximum: 100000 }
+        eventTypes:
+          type: array
+          items:
+            type: string
+            enum: [USER_LOGIN, PRODUCT_VIEWED, CART_UPDATED, PURCHASE_COMPLETED, PAYMENT_FAILED, APPLICATION_ERROR]
+    DeadLetterSummary:
+      type: object
+      additionalProperties: true
+      properties:
+        id: { type: integer, format: int64 }
+        status: { type: string, enum: [PENDING, REPLAY_REQUESTED, REPLAYED, DISCARDED, EXPIRED] }
+        failureCategory: { type: string }
+        eventId: { type: [string, "null"], format: uuid }
+        sourceTopic: { type: string }
+        sourcePartition: { type: integer }
+        sourceOffset: { type: integer, format: int64 }
+        deadLetteredAt: { type: string, format: date-time }
+    ObjectResponse:
+      type: object
+      additionalProperties: true
+paths:
+  /api/v1/system/status:
+    get:
+      tags: [status]
+      summary: Live checks of Kafka, PostgreSQL, workers, offset gaps and retention headroom
+      description: Always 200; a degraded dependency is reported as status DEGRADED with issues.
+      responses:
+        "200":
+          description: System status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+  /api/v1/live:
+    get:
+      tags: [live]
+      summary: The live snapshot (also pushed once per second on WebSocket /ws/v1/live)
+      responses:
+        "200":
+          description: Live snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+  /api/v1/events:
+    get:
+      tags: [events]
+      summary: Processed events, newest first, keyset-paged
+      parameters:
+        - { name: type, in: query, schema: { type: string } }
+        - { name: runId, in: query, schema: { type: string, format: uuid } }
+        - { name: cursor, in: query, schema: { type: string }, description: nextCursor of the previous page }
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: A page of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/EventRow" } }
+                  nextCursor: { type: [string, "null"] }
+        "400": { $ref: "#/components/responses/Problem" }
+  /api/v1/events/{eventId}:
+    get:
+      tags: [events]
+      summary: One processed event with its payload and the dead letters recorded for it
+      parameters:
+        - { name: eventId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Event detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/v1/analytics/series:
+    get:
+      tags: [analytics]
+      summary: Per-minute processing, dead letters and latency percentiles over a range
+      parameters:
+        - $ref: "#/components/parameters/Range"
+      responses:
+        "200":
+          description: Series
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+  /api/v1/analytics/distribution:
+    get:
+      tags: [analytics]
+      summary: Events and amounts by type, over a range or for one run (not both)
+      parameters:
+        - $ref: "#/components/parameters/Range"
+        - { name: runId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Distribution
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+  /api/v1/kafka/consumer-groups:
+    get:
+      tags: [kafka]
+      summary: Processing and dead-letter ingestion consumer groups as Kafka reports them
+      responses:
+        "200":
+          description: Consumer groups
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/v1/workers:
+    get:
+      tags: [kafka]
+      summary: Workers seen recently, with their counters and assigned partitions
+      responses:
+        "200":
+          description: Workers
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/ObjectResponse" } }
+  /api/v1/simulations:
+    get:
+      tags: [simulations]
+      summary: Simulation runs, newest first
+      parameters:
+        - { name: before, in: query, schema: { type: string, format: date-time } }
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Runs
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RunView" } }
+    post:
+      tags: [simulations]
+      summary: Start a bounded synthetic run (operator)
+      security: [{ operatorKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StartRequest" }
+      responses:
+        "202":
+          description: Run started
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/OperatorRejected" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/OperatorRejected" }
+        "503": { $ref: "#/components/responses/OperatorRejected" }
+  /api/v1/simulations/active:
+    get:
+      tags: [simulations]
+      summary: Progress of the run started from this api process
+      responses:
+        "200":
+          description: Progress
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "204": { description: No run started from this api process }
+  /api/v1/simulations/{runId}:
+    get:
+      tags: [simulations]
+      summary: One run with its event mix and latest reconciliation report
+      parameters:
+        - { name: runId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Run detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/v1/simulations/active/stop:
+    post:
+      tags: [simulations]
+      summary: Stop publishing the active run (operator)
+      security: [{ operatorKey: [] }]
+      responses:
+        "202": { description: Stop requested }
+        "401": { $ref: "#/components/responses/OperatorRejected" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/OperatorRejected" }
+        "503": { $ref: "#/components/responses/OperatorRejected" }
+  /api/v1/simulations/{runId}/reconcile:
+    post:
+      tags: [simulations]
+      summary: Reconcile a run now and store the result (operator)
+      security: [{ operatorKey: [] }]
+      parameters:
+        - { name: runId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Reconciliation report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "401": { $ref: "#/components/responses/OperatorRejected" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/OperatorRejected" }
+        "503": { description: Kafka did not answer the lag query, or operator actions are disabled }
+  /api/v1/dead-letters:
+    get:
+      tags: [dead-letters]
+      summary: Dead letters, newest first
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [PENDING, REPLAY_REQUESTED, REPLAYED, DISCARDED, EXPIRED] } }
+        - { name: before, in: query, schema: { type: integer, format: int64 }, description: return ids lower than this }
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Dead letters
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/DeadLetterSummary" } }
+        "400": { $ref: "#/components/responses/Problem" }
+  /api/v1/dead-letters/{id}:
+    get:
+      tags: [dead-letters]
+      summary: One dead letter with provenance, payload preview and headers
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Dead letter detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/v1/dead-letters/replay:
+    post:
+      tags: [dead-letters]
+      summary: Replay dead letters with their original event identity (operator)
+      security: [{ operatorKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids: { type: array, minItems: 1, maxItems: 100, items: { type: integer, format: int64, minimum: 1 } }
+      responses:
+        "200":
+          description: One result per id (REPLAYED, NOT_FOUND, NOT_PENDING, OUTSIDE_REPLAY_WINDOW, NO_EVENT_ID, PUBLISH_FAILED)
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/ObjectResponse" } }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/OperatorRejected" }
+        "429": { $ref: "#/components/responses/OperatorRejected" }
+        "503": { $ref: "#/components/responses/OperatorRejected" }
+  /api/v1/dead-letters/{id}/discard:
+    post:
+      tags: [dead-letters]
+      summary: Discard a PENDING or EXPIRED dead letter permanently, with a reason (operator)
+      security: [{ operatorKey: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 1, maxLength: 200 }
+      responses:
+        "200":
+          description: Discarded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObjectResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/OperatorRejected" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/OperatorRejected" }
+        "503": { $ref: "#/components/responses/OperatorRejected" }

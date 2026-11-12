@@ -53,7 +53,7 @@ class MigrateRoleIT {
                 .query(String.class)
                 .list();
 
-        assertThat(applied).containsExactly("1", "2", "3", "4");
+        assertThat(applied).containsExactly("1", "2", "3", "4", "5");
         for (String table : List.of(
                 "worker_heartbeats",
                 "simulation_runs",

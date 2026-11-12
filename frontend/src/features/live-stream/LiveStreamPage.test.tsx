@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { liveSnapshot } from '../../test/fixtures';
 import { appTree, feedOf, testQueryClient } from '../../test/render';
-import { LiveStreamPage, mergeStream, toItems, type StreamItem } from './LiveStreamPage';
+import { LiveStreamPage } from './LiveStreamPage';
+import { mergeStream, toItems, type StreamItem } from './stream';
 
 function item(key: string, at: string): StreamItem {
   return { key, at, status: 'PROCESSED', eventType: 'USER_LOGIN' };

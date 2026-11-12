@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -10,23 +8,13 @@ import {
   type ReactNode,
 } from 'react';
 import { Modal } from '../components/Modal';
+import { OperatorContext } from './operatorContext';
 
 /**
  * The operator key lives only in this component's memory: never in a URL, storage, cookie or log. It is dropped
  * after AUTO_LOCK_MS without operator activity, when the tab is closed or reloaded, or when the user locks.
  */
 export const AUTO_LOCK_MS = 10 * 60_000;
-
-interface OperatorContextValue {
-  unlocked: boolean;
-  /** Resolves with the key, asking for it first if locked; null if the user cancels. */
-  requireKey: () => Promise<string | null>;
-  /** Call when the server rejected the key (401) so the user is asked again. */
-  rejectKey: () => void;
-  lock: () => void;
-}
-
-const OperatorContext = createContext<OperatorContextValue | null>(null);
 
 export function OperatorKeyProvider({
   children,
@@ -91,14 +79,6 @@ export function OperatorKeyProvider({
       <UnlockDialog open={asking} onDone={finish} />
     </OperatorContext.Provider>
   );
-}
-
-export function useOperator(): OperatorContextValue {
-  const value = useContext(OperatorContext);
-  if (!value) {
-    throw new Error('useOperator must be used inside OperatorKeyProvider');
-  }
-  return value;
 }
 
 function UnlockDialog({ open, onDone }: { open: boolean; onDone: (key: string | null) => void }) {

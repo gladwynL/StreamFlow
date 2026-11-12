@@ -69,4 +69,5 @@ tracker, as in record mode.
   both modes, batch is the default; record mode remains available (`STREAMFLOW_WORKER_PROCESSING_MODE=RECORD`) and
   tested.
 - Spring Kafka specifics found while verifying it (failure state cleared after a successful batch, wrapped exception
-  given to the recoverer) are documented in docs/verification/spring-kafka-behavior.md.
+  given to the recoverer, and — found in Phase 6 by a broker-outage test — an in-memory batch retry that pauses the
+  consumer) are documented in docs/verification/spring-kafka-behavior.md and handled by the event error handler.

@@ -1,5 +1,8 @@
 # API reference
 
+Machine-readable description: [`openapi.yaml`](openapi.yaml) (OpenAPI 3.1, checked against the controllers by
+`OpenApiCoverageTest`).
+
 Served by the `api` role on port 8080 (in Docker: through nginx at `http://localhost:8080`). Errors use RFC 9457
 problem details (`application/problem+json`). Every published port binds to 127.0.0.1; there is no user
 authentication — this is a local deployment (ADR-0012).
@@ -10,7 +13,8 @@ Replay, discard and the simulation actions (start, stop, reconcile) change state
 
 - the operator key in the `X-StreamFlow-Operator-Key` header, compared in constant time with
   `STREAMFLOW_API_OPERATOR_KEY` (set `STREAMFLOW_OPERATOR_KEY` in `.env` for Docker Compose);
-- at most 30 operator requests per minute per api process (`streamflow.api.operator-requests-per-minute`).
+- at most 30 operator requests per minute per api process (`streamflow.api.operator-requests-per-minute`); rejected
+  attempts count too, so the key cannot be guessed faster than that.
 
 | Situation | Response |
 |---|---|
@@ -37,6 +41,11 @@ cookie or log), sends it only in the header above, and forgets it after 10 minut
 Live checks of Kafka, PostgreSQL and worker heartbeats, plus dead-letter counts by status. Always `200`; a degraded
 dependency is reported in the body (`status: DEGRADED`, `issues: [...]`). Dead-letter counts are informational and
 do not affect `status`.
+
+Phase 6 additions: `offsetGaps` lists recorded offset gaps (`consumerGroup`, `topic`, `partition`, `lostPosition`,
+`logStartOffset`, `eventsLost`, `detectedAt`, `occurrences`, `open`, `committedOffset`); an open gap is an issue with
+the operator procedure (runbook, "Offset gaps"). A partition with unread records at 80 % or more of its
+`retention.bytes` is also reported as an issue.
 
 ## `GET /api/v1/dead-letters`
 
@@ -126,7 +135,7 @@ to 900 ms, so REST and WebSocket share one computation per second.
 | `throughput.failedAttemptsPerSecond` | failed processing attempts per category (`BAD_RECORD`, `TRANSIENT`, `INFRASTRUCTURE`) across live workers over about 10 s, from heartbeat counters; includes attempts that later succeeded |
 | `throughput.duplicatesPerSecond` | deliveries suppressed by the ledger across live workers over about 10 s |
 | `latency` | `samples`, `p50Millis`, `p95Millis`, `p99Millis` over the last 5 minutes |
-| `kafka` | processing group `groupState`, `members`, `totalLag`, `logEndOffset`, and per partition `logEndOffset`, `committedOffset`, `lag`, `owner` (client id from the group coordinator); `error` when Kafka could not be queried |
+| `kafka` | processing group `groupState`, `members`, `totalLag`, `logEndOffset`, `retentionBytes` (size limit per partition), and per partition `logEndOffset`, `committedOffset`, `lag`, `owner` (client id from the group coordinator), `sizeBytes` (stored on the broker); `error` when Kafka could not be queried |
 | `databaseError` | set when PostgreSQL could not be queried; throughput, latency, workers and recent rows are then null |
 | `workers` | `live`, `seen`, `anyInOutage`, and per worker its counters since process start and assigned partitions |
 | `deadLetters` | counts by status |

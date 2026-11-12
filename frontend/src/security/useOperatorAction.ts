@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { ApiError } from '../api/client';
-import { useOperator } from './OperatorKey';
+import { useOperator } from './operatorContext';
 
 /** Thrown when the user dismisses the unlock dialog. */
 export class OperatorCancelled extends Error {

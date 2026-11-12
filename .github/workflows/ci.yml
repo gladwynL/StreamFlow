@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Manual runs, used to show the suite is stable across consecutive runs (Phase 0 §11, Phase 6).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -79,9 +81,16 @@ jobs:
       - name: Check the dashboard and the status API through nginx
         run: |
           curl --fail --silent --show-error http://127.0.0.1:8080/ | grep -q '<div id="root">'
+          # Security headers on the page and on API responses through nginx (Phase 6).
+          for path in / /api/v1/system/status; do
+            headers=$(curl --silent --show-error --dump-header - --output /dev/null "http://127.0.0.1:8080$path")
+            for h in "X-Content-Type-Options: nosniff" "X-Frame-Options: DENY" "Referrer-Policy: no-referrer"                      "Content-Security-Policy: default-src 'self'"; do
+              echo "$headers" | grep -qi "^$h" || { echo "missing on $path: $h"; exit 1; }
+            done
+          done
           curl --fail --silent --show-error http://127.0.0.1:8080/api/v1/system/status | tee status.json
           echo
-          jq -e '.status == "OK" and .kafka.reachable and .database.schemaVersion == "4" and ([.workers[] | select(.live)] | length) >= 1' status.json
+          jq -e '.status == "OK" and .kafka.reachable and .database.schemaVersion == "5" and ([.workers[] | select(.live)] | length) >= 1' status.json
       # Phase 2 acceptance: 100,000 events at 1,000 events/s must reconcile exactly (exit status 0 = PASS).
       - name: Publish a 100,000-event seeded run and require it to reconcile as PASS
         run: |

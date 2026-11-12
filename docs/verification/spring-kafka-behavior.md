@@ -100,5 +100,12 @@ Item 7 (batch listener) belongs to Phase 5.
   state (`clearThreadState()` is a no-op), giving batch mode record mode's semantics: one entry per partition,
   replaced when another record of the partition fails, removed when the record is recovered. `RetryIT` passes in
   both modes.
+- **A batch failure that is not a `BatchListenerFailedException` pauses the consumer (Phase 6).** After a broker
+  outage the offset commit following a successful batch failed (`CommitFailedException`, "the coordinator is not
+  aware of this member"). spring-kafka handled it with `ErrorHandlingUtils.retryBatch`, which pauses the consumer's
+  whole assignment while retrying in memory; the outage's rebalance then left the reassigned partitions unconsumed
+  (`KafkaOutageIT` in batch mode: lag stayed above zero for 180 s). The event error handler now reports such failures
+  as a failure of the batch's first record, so the batch is sought back and redelivered (duplicates suppressed by the
+  ledger), and Kafka commit and retriable errors are classified as infrastructure (never dead-lettered).
 - **The recoverer receives the `BatchListenerFailedException`, not its cause.** Dead letters recorded the wrapper as
   their exception class (`DeadLetterIT` in batch mode); the recoverer now unwraps it.

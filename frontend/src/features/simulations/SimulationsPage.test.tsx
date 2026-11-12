@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { OPERATOR_HEADER } from '../../api/client';
 import { jsonResponse, liveSnapshot } from '../../test/fixtures';
 import { feedOf, renderApp } from '../../test/render';
-import { DEFAULT_FORM, SimulationsPage, toRequest } from './SimulationsPage';
+import { SimulationsPage } from './SimulationsPage';
+import { DEFAULT_FORM, toRequest } from './runRequest';
 
 describe('toRequest', () => {
   it('builds a bounded request and omits defaults', () => {

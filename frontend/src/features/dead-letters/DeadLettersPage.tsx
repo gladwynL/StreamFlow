@@ -5,31 +5,13 @@ import { DEAD_LETTER_STATUSES, type DeadLetterSummary, type ReplayResult } from 
 import { ConfirmDialog, Modal } from '../../components/Modal';
 import { StatusPill, type Tone } from '../../components/StatusPill';
 import { EmptyState, ErrorState, LoadingState, Notice, PageHeader } from '../../components/ui';
-import { useLive } from '../../live/LiveFeedProvider';
+import { useLive } from '../../live/liveContext';
 import { formatAge, formatCount, formatDateTime, humanize, shortId } from '../../lib/format';
 import { useOperatorAction } from '../../security/useOperatorAction';
+import { eligibility } from './eligibility';
 
 export const PAGE_SIZE = 25;
-/** Matches the api's replay window (streamflow.retention.replay-window, 7 days by default). */
-export const REPLAY_WINDOW_MS = 7 * 24 * 3600_000;
 const MAX_REASON = 200;
-
-/** Why a dead letter can or cannot be replayed, as the server will decide it. */
-export function eligibility(
-  d: DeadLetterSummary,
-  now = Date.now(),
-): { replayable: boolean; reason: string } {
-  if (d.status !== 'PENDING') {
-    return { replayable: false, reason: `${humanize(d.status)}` };
-  }
-  if (!d.eventId) {
-    return { replayable: false, reason: 'No event id: cannot be deduplicated' };
-  }
-  if (now - new Date(d.deadLetteredAt).getTime() > REPLAY_WINDOW_MS) {
-    return { replayable: false, reason: 'Outside the 7-day replay window' };
-  }
-  return { replayable: true, reason: 'Replayable' };
-}
 
 const statusTone: Record<string, Tone> = {
   PENDING: 'warn',

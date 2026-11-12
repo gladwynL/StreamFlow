@@ -104,20 +104,27 @@ public class LiveSnapshotService {
         Double publishedPerSecond = null;
         try {
             GroupState group = groups.describe(consumerGroup, topics.events());
+            Map<Integer, Long> sizes = partitionSizes();
             kafka = new LiveSnapshot.Kafka(
                     group.state(),
                     group.members().size(),
                     group.totalLag(),
                     group.logEndOffset(),
+                    retentionBytes(),
                     group.partitions().stream()
                             .map(p -> new LiveSnapshot.PartitionView(
-                                    p.partition(), p.logEndOffset(), p.committedOffset(), p.lag(), p.ownerClientId()))
+                                    p.partition(),
+                                    p.logEndOffset(),
+                                    p.committedOffset(),
+                                    p.lag(),
+                                    p.ownerClientId(),
+                                    sizes.get(p.partition())))
                             .toList(),
                     null);
             publishedPerSecond = publishedRate(group.logEndOffset(), now);
         } catch (RuntimeException e) {
             log.debug("Kafka query for the live snapshot failed", e);
-            kafka = new LiveSnapshot.Kafka(null, null, null, null, null, message(e));
+            kafka = new LiveSnapshot.Kafka(null, null, null, null, null, null, message(e));
             previousLogEnd = null;
         }
 
@@ -210,6 +217,20 @@ public class LiveSnapshotService {
                     null,
                     null);
         }
+    }
+
+    private Map<Integer, Long> partitionSizes() {
+        try {
+            return groups.partitionSizes(topics.events());
+        } catch (RuntimeException e) {
+            log.debug("Could not read partition sizes: {}", e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private Long retentionBytes() {
+        String value = topics.events().configs().get("retention.bytes");
+        return value == null ? null : Long.valueOf(value);
     }
 
     private Double publishedRate(long logEnd, long now) {

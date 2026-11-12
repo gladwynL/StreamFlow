@@ -112,6 +112,7 @@
                                 <include>**/CrashRecoveryIT.java</include>
                                 <include>**/DuplicateDeliveryIT.java</include>
                                 <include>**/DatabaseOutageIT.java</include>
+                                <include>**/KafkaOutageIT.java</include>
                                 <include>**/DeadLetterIT.java</include>
                                 <include>**/DeadLetterPublishFailureIT.java</include>
                                 <include>**/RetryIT.java</include>

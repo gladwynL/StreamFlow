@@ -4,7 +4,8 @@ import type { DeadLetterSummary } from '../../api/types';
 import { OPERATOR_HEADER } from '../../api/client';
 import { jsonResponse, liveSnapshot } from '../../test/fixtures';
 import { feedOf, renderApp } from '../../test/render';
-import { DeadLettersPage, eligibility } from './DeadLettersPage';
+import { DeadLettersPage } from './DeadLettersPage';
+import { eligibility } from './eligibility';
 
 const now = Date.now();
 const recent = new Date(now - 3_600_000).toISOString();

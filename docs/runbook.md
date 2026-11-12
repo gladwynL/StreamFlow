@@ -211,6 +211,83 @@ docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-se
 `STREAMFLOW_FAULT_INJECTION_ENABLED=true`. Scenarios are rows in `fault_scenarios`, limited to two predefined kinds
 (`REJECT_EVENT_TYPE`, `TRANSIENT_FAILURES`) and to at most ten minutes each.
 
+## Operations
+
+### Safe startup
+
+1. Check memory first (section above); on this laptop keep other projects' containers stopped.
+2. `docker compose --profile app up -d --build --wait` — `migrate` runs first (schema, topics, consumer-group offsets)
+   and exits 0; `api`, `worker` and `web` wait for it. A non-zero `migrate` exit is a deliberate safety stop: read its
+   log before doing anything else.
+3. Open http://localhost:8080 → System: status must be OK. Any issue listed there is actionable as written.
+
+### Safe shutdown and restart
+
+- `docker compose --profile app stop` stops every service gracefully: workers finish the records they hold, commit
+  their offsets and leave the consumer group (30 s grace period). Data in the named volumes is kept.
+- `docker compose --profile app down` also removes the containers and network; volumes are kept. **Only
+  `down --volumes` deletes Kafka and PostgreSQL data** — never needed for a restart.
+- After an unclean stop (power loss, `docker kill`, Docker VM restart) just start again: offsets are committed only
+  after the database commit, so a worker replays at most its uncommitted records and the ledger suppresses them as
+  duplicates. Runs that were publishing at the time stay `RUNNING` and reconcile as INCOMPLETE; that is the honest
+  result, not an error to fix.
+- One worker at a time can be restarted (`docker compose restart worker`): its partitions move to the remaining
+  workers after the 10 s session timeout and come back after the restart.
+
+### Offset gaps (retention deleted unread events)
+
+**Symptom:** System status DEGRADED with "Offset gap on <topic>-<p> for group <g> … events lost"; the worker log
+has one `OFFSET GAP` error per affected partition; lag on that partition no longer falls.
+
+**What happened:** Kafka deleted records of that partition (size or time retention) before the consumer group read
+them. With `auto.offset.reset=none` the worker does **not** skip ahead: it paused that partition, recorded the gap
+(table `offset_gaps`: group, partition, lost position, new log start, events lost) and kept processing the other
+partitions. Nothing is reset automatically.
+
+**Recovery is a deliberate operator decision**, because it accepts the loss of the recorded events:
+
+1. Look at the gap: `docker compose exec postgres psql -U streamflow -d streamflow -c "SELECT * FROM offset_gaps"`.
+   The lost events cannot be recovered from Kafka; if their source can republish them, do that first.
+2. Stop the workers (the group must be empty to change its offsets): `docker compose stop worker`.
+3. Preview, then move **only the affected partition** to the first offset Kafka still holds:
+   ```bash
+   docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+     --group streamflow-processor --topic streamflow.events.v1:<p> --reset-offsets --to-earliest --dry-run
+   docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+     --group streamflow-processor --topic streamflow.events.v1:<p> --reset-offsets --to-earliest --execute
+   ```
+4. Start the workers: `docker compose --profile app up -d worker`. The surviving events are processed; status shows
+   the gap as resolved (`open: false`).
+
+The gap row is never deleted; runs whose events were lost keep reconciling as FAIL with the lost events listed as
+missing. This is verified end to end by `OffsetOutOfRangeIT`.
+
+### Backlog and disk
+
+Each event-topic partition keeps at most `retention.bytes` = 1 GiB (and 24 h). Unread records beyond that are
+deleted by Kafka, which produces an offset gap. The Kafka page shows every partition's stored size against the
+limit, and System status warns when a partition with unread records is above 80 % of it. At ~110 bytes per event
+on disk, a backlog of about 7.8 million unread events per partition reaches 80 %. Remedy: let the workers catch up
+(add a worker or stop publishing); do not raise retention without checking disk space (`docker system df`).
+
+### Outages
+
+- **PostgreSQL down:** workers retry with capped back-off, never dead-letter, and resume by themselves; the consumer
+  stays in its group. Status shows PostgreSQL unreachable.
+- **Kafka down:** workers keep reconnecting; when the broker returns, a batch whose offset commit failed is
+  redelivered and the duplicates are suppressed by the ledger. Nothing to do but restore the broker
+  (`KafkaOutageIT`).
+
+### Cleaning up
+
+- Stopped containers left by integration tests (random names, images `apache/kafka` and `postgres`, label
+  `org.testcontainers=true`) are normally removed by Testcontainers; after an interrupted test run some can remain.
+  List them with `docker ps -a --filter label=org.testcontainers=true` and remove them with `docker rm <name>` (no
+  data of the stacks is in them).
+- The benchmark stack (`streamflow-bench`) has its own volumes; stop it with the command in
+  [`docs/benchmarks/methodology.md`](benchmarks/methodology.md). Its data is benchmark-only.
+- Never use `docker system prune --volumes` here: it would delete the development data too.
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Action |
@@ -223,6 +300,10 @@ docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-se
 | Replay returns 503 | No operator key configured | Set `STREAMFLOW_OPERATOR_KEY` in `.env` and restart the api |
 | Dead letters pile up in the topic but not in the API | Ingestion failing | Check `streamflow.deadletters.ingestion.failures` and the worker log ("Dead-letter ingestion of … failed") |
 | Lag grows, no dead letters, worker readiness DOWN | PostgreSQL unreachable (infrastructure outage) | Restore the database; processing resumes by itself |
+| Status: "Offset gap on …"; one partition's lag stays flat | Retention deleted unread events | Operator procedure in "Offset gaps" above |
+| Status: "Partition … of its retention size limit" | Backlog close to the 1 GiB partition limit | Let workers catch up (Backlog and disk) |
+| Operator actions return 429 | More than 30 attempts in a minute (rejected keys count too) | Wait a minute; check the key |
+| Worker log: "Batch … failed outside record processing" | Offset commit failed (broker outage or rebalance) | None: the batch is redelivered and duplicates are suppressed |
 
 ## Measurements
 
@@ -251,7 +332,7 @@ Container memory from `docker stats`, two samples about 1 and 2.5 minutes after 
 
 The Docker VM process (`vmmemWSL`) used about 1.26 GB of host memory at the second sample. These
 are idle figures from two samples, not load measurements; behaviour under event traffic is
-measured in Phase 5.
+in [`docs/benchmarks/README.md`](benchmarks/README.md).
 
 ### Benchmarks (Phase 5)
 

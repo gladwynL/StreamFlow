@@ -178,6 +178,24 @@ public final class IntegrationTestInfrastructure {
                 .exec();
     }
 
+    /**
+     * Freezes the Kafka broker ({@code docker pause}): clients see a broker that stops answering, as in an outage.
+     * Always pair with {@link #unpauseKafka()} in a {@code finally} block.
+     */
+    public static void pauseKafka() {
+        DockerClientFactory.instance()
+                .client()
+                .pauseContainerCmd(KAFKA.getContainerId())
+                .exec();
+    }
+
+    public static void unpauseKafka() {
+        DockerClientFactory.instance()
+                .client()
+                .unpauseContainerCmd(KAFKA.getContainerId())
+                .exec();
+    }
+
     public static Admin newAdmin() {
         return Admin.create(Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers()));
     }

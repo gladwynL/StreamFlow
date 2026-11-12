@@ -25,13 +25,17 @@ public class OperatorGuard {
 
     public OperatorGuard(StreamflowProperties properties) {
         String key = properties.api().operatorKey();
-        this.operatorKey = key == null || key.isBlank() ? null : key.getBytes(UTF_8);
+        this.operatorKey = key == null || key.isBlank() ? null : sha256(key);
         this.rateLimit = new TokenBucket(properties.api().operatorRequestsPerMinute());
     }
 
     /**
-     * @throws ResponseStatusException 503 if operator actions are disabled, 401 for a missing or wrong key, 429 when
-     *     the rate limit is exceeded
+     * Every attempt, accepted or rejected, consumes the rate limit, so the key cannot be guessed faster than the
+     * limit allows. Keys are compared as SHA-256 digests in constant time, so the comparison reveals neither the
+     * content nor the length of the configured key.
+     *
+     * @throws ResponseStatusException 503 if operator actions are disabled, 429 when the rate limit is exceeded,
+     *     401 for a missing or wrong key
      */
     public void authorize(String presentedKey) {
         if (operatorKey == null) {
@@ -39,11 +43,19 @@ public class OperatorGuard {
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "Operator actions are disabled: set STREAMFLOW_API_OPERATOR_KEY to enable them");
         }
-        if (presentedKey == null || !MessageDigest.isEqual(operatorKey, presentedKey.getBytes(UTF_8))) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid " + HEADER);
-        }
         if (!rateLimit.tryAcquire()) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Operator rate limit exceeded");
+        }
+        if (presentedKey == null || !MessageDigest.isEqual(operatorKey, sha256(presentedKey))) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid " + HEADER);
+        }
+    }
+
+    private static byte[] sha256(String value) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(value.getBytes(UTF_8));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is required by the Java platform", e);
         }
     }
 

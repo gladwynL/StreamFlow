@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { LiveSnapshot } from '../api/types';
 import { LoadingState, Notice } from '../components/ui';
 import { formatTime } from '../lib/format';
-import { useLive } from './LiveFeedProvider';
+import { useLive } from './liveContext';
 
 /**
  * Renders its children with the latest snapshot. Before the first snapshot it shows a loading or disconnected

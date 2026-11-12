@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { api } from '../../api/endpoints';
 import type { LiveSnapshot } from '../../api/types';
-import { ChartFrame, DataTable, SERIES, TimeLines } from '../../components/charts';
+import { ChartFrame, DataTable, TimeLines } from '../../components/charts';
+import { SERIES } from '../../components/chartColors';
 import { ErrorState, Metric, Notice, PageHeader, SyntheticBadge } from '../../components/ui';
-import { useLive } from '../../live/LiveFeedProvider';
+import { useLive } from '../../live/liveContext';
 import { LiveGate } from '../../live/LiveGate';
 import {
   formatCount,
@@ -15,6 +16,7 @@ import {
   humanize,
 } from '../../lib/format';
 import { fillMinutes } from '../../lib/series';
+import { appliedShare } from './appliedShare';
 
 export function OverviewPage() {
   return (
@@ -31,19 +33,6 @@ export function OverviewPage() {
       <LiveGate>{(snapshot) => <OverviewBody snapshot={snapshot} />}</LiveGate>
     </div>
   );
-}
-
-/**
- * Of the records that reached a final outcome in the last minute (applied or dead-lettered), the share that was
- * applied. Null when nothing finished.
- */
-export function appliedShare(snapshot: LiveSnapshot): number | null {
-  const t = snapshot.throughput;
-  if (!t) {
-    return null;
-  }
-  const finished = t.processedLastMinute + t.deadLetteredLastMinute;
-  return finished === 0 ? null : t.processedLastMinute / finished;
 }
 
 function OverviewBody({ snapshot }: { snapshot: LiveSnapshot }) {

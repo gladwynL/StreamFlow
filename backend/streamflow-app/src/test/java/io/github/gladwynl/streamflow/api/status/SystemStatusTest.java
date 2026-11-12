@@ -92,4 +92,21 @@ class SystemStatusTest {
 
         assertThat(status.issues()).containsExactly("The database schema has not been migrated");
     }
+
+    @Test
+    void warnsWhenAPartitionWithUnreadRecordsNearsItsRetentionSize() {
+        long limit = 1_000;
+        List<String> warnings = SystemStatus.retentionWarnings(
+                "events", Map.of(0, 5L, 1, 0L, 2, 9L), Map.of(0, 850L, 1, 990L, 2, 500L), limit);
+        // Partition 1 is full but fully read (no risk); partition 2 lags but is half full.
+        assertThat(warnings).hasSize(1);
+        assertThat(warnings.getFirst()).contains("events-0").contains("85 %").contains("5 unread records");
+        assertThat(SystemStatus.retentionWarnings("events", Map.of(0, 5L), Map.of(0, 850L), null))
+                .isEmpty();
+
+        SystemStatus status = SystemStatus.evaluate(
+                NOW, KAFKA_OK, DATABASE_OK, List.of(LIVE_WORKER), "15s", Map.of(), List.of(), warnings);
+        assertThat(status.status()).isEqualTo(SystemStatus.Overall.DEGRADED);
+        assertThat(status.issues()).containsExactlyElementsOf(warnings);
+    }
 }

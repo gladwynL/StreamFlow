@@ -67,7 +67,7 @@ function KafkaBody({ snapshot }: { snapshot: LiveSnapshot }) {
           </p>
         ) : (
           <div className="relative overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[800px] text-left text-sm">
               <thead className="text-xs text-ink-muted">
                 <tr>
                   <th scope="col" className="px-5 py-2 font-medium">
@@ -84,6 +84,9 @@ function KafkaBody({ snapshot }: { snapshot: LiveSnapshot }) {
                   </th>
                   <th scope="col" className="px-5 py-2 font-medium">
                     Lag
+                  </th>
+                  <th scope="col" className="px-5 py-2 font-medium">
+                    Stored / retention limit
                   </th>
                 </tr>
               </thead>
@@ -117,6 +120,9 @@ function KafkaBody({ snapshot }: { snapshot: LiveSnapshot }) {
                           {formatCount(p.lag)}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-5 py-2">
+                      <RetentionFill size={p.sizeBytes} limit={k.retentionBytes} lag={p.lag} />
                     </td>
                   </tr>
                 ))}
@@ -208,6 +214,42 @@ function KafkaBody({ snapshot }: { snapshot: LiveSnapshot }) {
       </div>
     </>
   );
+}
+
+/**
+ * How full a partition is relative to retention.bytes. Beyond the limit Kafka deletes the oldest records, read or
+ * not; with unread records (lag) that would be an offset gap, so a lagging partition above 80 % is flagged.
+ */
+function RetentionFill({
+  size,
+  limit,
+  lag,
+}: {
+  size: number | null;
+  limit: number | null;
+  lag: number;
+}) {
+  if (size === null || !limit) {
+    return <span className="text-xs text-ink-muted">—</span>;
+  }
+  const fill = size / limit;
+  const atRisk = lag > 0 && fill >= 0.8;
+  return (
+    <span className={`tabular font-mono text-xs ${atRisk ? 'text-bad' : 'text-ink'}`}>
+      {formatBytes(size)} · {(Math.floor(fill * 1000) / 10).toFixed(1)} %
+      {atRisk ? ' · at risk' : ''}
+    </span>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 ** 3) {
+    return `${(bytes / 1024 ** 3).toFixed(2)} GiB`;
+  }
+  if (bytes >= 1024 ** 2) {
+    return `${(bytes / 1024 ** 2).toFixed(1)} MiB`;
+  }
+  return `${Math.round(bytes / 1024)} KiB`;
 }
 
 function WorkerStat({ label, value }: { label: string; value: number }) {

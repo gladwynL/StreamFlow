@@ -243,6 +243,12 @@ class DashboardApiIT {
 
         JsonNode live = getJson("/api/v1/live");
         assertThat(live.at("/kafka/totalLag").asLong()).isZero();
+        assertThat(live.at("/kafka/retentionBytes").asLong()).isPositive();
+        long stored = 0;
+        for (JsonNode partition : live.at("/kafka/partitions")) {
+            stored += partition.get("sizeBytes").asLong();
+        }
+        assertThat(stored).as("partition sizes are read from the broker").isPositive();
         assertThat(live.at("/kafka/error").isNull()).isTrue();
         assertThat(live.get("databaseError").isNull()).isTrue();
         assertThat(live.at("/workers/live").asInt()).isPositive();

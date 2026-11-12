@@ -39,6 +39,16 @@ class FailureClassifierTest {
     }
 
     @Test
+    void kafkaCommitAndBrokerFailuresAreInfrastructure() {
+        assertThat(classify(new org.apache.kafka.clients.consumer.CommitFailedException("coordinator not aware")))
+                .isEqualTo(FailureCategory.INFRASTRUCTURE);
+        assertThat(classify(new org.apache.kafka.common.errors.RebalanceInProgressException("rebalancing")))
+                .isEqualTo(FailureCategory.INFRASTRUCTURE);
+        assertThat(classify(new RuntimeException(new org.apache.kafka.common.errors.TimeoutException("broker"))))
+                .isEqualTo(FailureCategory.INFRASTRUCTURE);
+    }
+
+    @Test
     void unavailableDependenciesAreInfrastructure() {
         assertThat(classify(sql("08006"))).isEqualTo(FailureCategory.INFRASTRUCTURE);
         assertThat(classify(sql("57P01"))).isEqualTo(FailureCategory.INFRASTRUCTURE);

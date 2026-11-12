@@ -38,6 +38,7 @@ public class WorkerMetrics {
     final Counter recoveries;
     final Counter rebalances;
     final Counter consumerErrors;
+    final Counter offsetGaps;
     private final Map<FailureCategory, Counter> failures = new EnumMap<>(FailureCategory.class);
     private final Map<FailureCategory, Counter> deadLettered = new EnumMap<>(FailureCategory.class);
     private final AtomicInteger outage = new AtomicInteger();
@@ -52,6 +53,7 @@ public class WorkerMetrics {
         recoveries = meters.counter("streamflow.infrastructure.recoveries");
         rebalances = meters.counter("streamflow.consumer.rebalances");
         consumerErrors = meters.counter("streamflow.consumer.errors");
+        offsetGaps = meters.counter("streamflow.consumer.offset.gaps");
         for (FailureCategory category : FailureCategory.values()) {
             failures.put(category, meters.counter("streamflow.processing.failures", "category", category.name()));
             deadLettered.put(category, meters.counter("streamflow.deadletters.published", "category", category.name()));

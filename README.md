@@ -1,8 +1,9 @@
 # StreamFlow
 
-> **Work in progress.** Phases 1–5 of a seven-phase plan are complete: foundations, the event
-> streaming core, reliability and recovery, the API and dashboard, and performance. This README only
-> describes what exists and has been verified.
+> **Work in progress.** Phases 1–6 of a seven-phase plan are complete: foundations, the event
+> streaming core, reliability and recovery, the API and dashboard, performance, and hardening. This
+> README only describes what exists and has been verified; measurements are labelled as local
+> measurements, and limitations are listed at the end.
 
 StreamFlow is a real-time distributed event streaming and analytics platform: synthetic e-commerce
 events are published to Apache Kafka and processed by independent workers into PostgreSQL with
@@ -10,7 +11,10 @@ explicit, tested delivery semantics. The design is in
 [`docs/planning/phase-0-architecture.md`](docs/planning/phase-0-architecture.md) and the decisions in
 [`docs/adr/`](docs/adr/).
 
-## What exists today
+## Verified capabilities
+
+Each capability is backed by automated tests ([`docs/reliability.md`](docs/reliability.md) maps
+every claim to its test).
 
 - **Event contract:** a versioned JSON envelope with six event types, strict decoding (unknown
   fields, versions and types rejected), explicit validation rules, and time-ordered UUIDv7 ids.
@@ -49,19 +53,30 @@ explicit, tested delivery semantics. The design is in
   values show as a dash. Bounded synthetic runs can be started, stopped and reconciled, and dead
   letters replayed or discarded, behind confirmation dialogs and an operator key held only in
   memory. Accessible (axe-checked, keyboard, reduced motion) and responsive.
-- **Benchmarks** ([`docs/benchmarks/`](docs/benchmarks/README.md)): a headless `loadgen` role and a
-  reproducible harness on an isolated Compose project; every run must reconcile exactly. On one laptop
-  (6-core Ryzen 5 PRO 7540U, Docker Desktop), medians of repeated runs, all 97 reconciled:
-  - one worker drains **15,548 events/s** (14,276–16,598) in the default batch mode and **941 events/s**
-    (783–983) in record mode (one transaction per record);
-  - at 500 events/s offered, batch-mode processing latency is p50 5.8 ms, p95 27.7 ms, p99 361 ms;
-  - the producer publishes **63,247 events/s** (61,679–69,683) acknowledged by Kafka (acks=all);
-  - profiling showed record mode was bound by per-record commit and round-trip latency, not CPU; fewer
-    round trips gave +30 % and batching one commit per poll batch gave 16×, with every reliability test
-    passing in both modes. Scaling, skew, recovery and limits are in the report.
+- **Hardening (Phase 6):** a Kafka position deleted by retention is never skipped: the worker pauses
+  that partition, records the gap with the number of events lost, and status explains the deliberate
+  operator recovery; the dashboard warns before a lagging partition reaches its retention limit;
+  broker and database outages are ridden out in both processing modes; operator-key guessing is
+  rate-limited ([`docs/security.md`](docs/security.md)); an OpenAPI description
+  ([`docs/openapi.yaml`](docs/openapi.yaml)) is checked against the controllers.
 - **Docker Compose** stack and **GitHub Actions CI** that runs every integration test, a Compose
   smoke test publishing a run that must reconcile as PASS, and Playwright end-to-end tests of the
   dashboard against that stack.
+
+## Local benchmark measurements
+
+Measured with the benchmark harness ([`docs/benchmarks/`](docs/benchmarks/README.md)) on one laptop
+(6-core Ryzen 5 PRO 7540U, Docker Desktop): medians of repeated runs, every run reconciled exactly.
+These describe this machine, not production capacity.
+
+- One worker drains **15,548 events/s** (14,276–16,598) in the default batch mode and **941 events/s**
+  (783–983) in record mode (one transaction per record).
+- At 500 events/s offered, batch-mode processing latency is p50 5.8 ms, p95 27.7 ms, p99 361 ms. One of
+  three batch runs at 750 events/s showed an unexplained p95 of 7.7 s; it remains a documented
+  uncertainty.
+- The producer publishes **63,247 events/s** (61,679–69,683) acknowledged by Kafka (acks=all).
+- Profiling showed record mode was bound by per-record commit and round-trip latency, not CPU: fewer
+  round trips gave +30 % and batching one commit per poll batch gave 16×.
 
 ## Stack
 
@@ -87,20 +102,34 @@ Open http://localhost:8080 for the dashboard. To start runs or replay dead lette
 ```
 backend/    Maven build: streamflow-events (contracts), streamflow-app (Spring Boot roles)
 frontend/   React dashboard (Vite)
+benchmarks/ benchmark harness (run.sh, scenarios, analyze.py) and raw results
 docs/       architecture, ADRs, reliability claims, verification notes, runbook, versions
 compose.yaml
 ```
 
-## Limitations (current)
+## Known limitations
 
 - Per-key order is not preserved for events that are dead-lettered and replayed.
-- Local use only: no user authentication (operator actions need a key); a single Kafka broker with
-  replication factor 1.
+- Events deleted by Kafka retention before they were read are lost; StreamFlow records and reports
+  them, and recovery needs an operator ([`docs/runbook.md`](docs/runbook.md), "Offset gaps").
 - At high throughput the live stream view samples the newest events (20 per second); the full
   history is in the event API and the analytics.
-- Performance figures come from one laptop where every component shares one CPU and one Docker VM;
-  they are not production capacity figures.
-- No performance figures are published until they are measured (Phase 5).
+- Performance figures come from one laptop where every component shares one CPU and one Docker VM.
+
+## Production deployment limitations
+
+StreamFlow is built and verified as a local, single-user system:
+
+- No user authentication; operator actions are protected by one shared key and a rate limit.
+- One Kafka broker with replication factor 1, one PostgreSQL instance, no TLS: losing the Docker VM's
+  disk before a flush can lose acknowledged events.
+- Every port binds to 127.0.0.1; nothing is designed to be exposed to a network.
+
+## Future improvements
+
+Not implemented: multi-broker Kafka and replicated PostgreSQL, scaling across machines, 3- and
+12-partition and KIP-848 consumer-protocol measurements, and a cheaper latency-histogram write in
+batch mode (see the limitations in [`docs/benchmarks/README.md`](docs/benchmarks/README.md)).
 
 ## License
 

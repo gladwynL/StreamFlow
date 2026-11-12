@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, RANGES, type Range } from '../../api/endpoints';
 import type { Series } from '../../api/types';
-import { CategoryBars, ChartFrame, DataTable, SERIES, TimeLines } from '../../components/charts';
+import { CategoryBars, ChartFrame, DataTable, TimeLines } from '../../components/charts';
+import { SERIES } from '../../components/chartColors';
 import {
   EmptyState,
   ErrorState,

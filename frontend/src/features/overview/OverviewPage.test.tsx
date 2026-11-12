@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
 import { jsonResponse, liveSnapshot } from '../../test/fixtures';
 import { feedOf, renderApp } from '../../test/render';
-import { appliedShare, OverviewPage } from './OverviewPage';
+import { appliedShare } from './appliedShare';
+import { OverviewPage } from './OverviewPage';
 
 const series = {
   range: '1h',
@@ -52,6 +53,7 @@ describe('OverviewPage', () => {
             members: null,
             totalLag: null,
             logEndOffset: null,
+            retentionBytes: null,
             partitions: null,
             error: 'timeout',
           },

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { renderApp } from '../test/render';
 import { App } from './App';
-import { NAV } from './Layout';
+import { NAV } from './nav';
 
 describe('App', () => {
   it('shows a not-found page with a way back for unknown routes', () => {

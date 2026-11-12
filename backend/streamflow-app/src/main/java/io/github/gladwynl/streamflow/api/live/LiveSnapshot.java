@@ -52,16 +52,23 @@ public record LiveSnapshot(
      */
     public record Latency(long samples, Long p50Millis, Long p95Millis, Long p99Millis) {}
 
-    /** @param error set when Kafka could not be queried; the other fields are then null */
+    /**
+     * @param retentionBytes the event topic's size limit per partition ({@code retention.bytes}); beyond it Kafka
+     *     deletes the oldest records, read or not
+     * @param error set when Kafka could not be queried; the other fields are then null
+     */
     public record Kafka(
             String groupState,
             Integer members,
             Long totalLag,
             Long logEndOffset,
+            Long retentionBytes,
             List<PartitionView> partitions,
             String error) {}
 
-    public record PartitionView(int partition, long logEndOffset, Long committedOffset, long lag, String owner) {}
+    /** @param sizeBytes bytes the partition occupies on the broker, or null if they could not be read */
+    public record PartitionView(
+            int partition, long logEndOffset, Long committedOffset, long lag, String owner, Long sizeBytes) {}
 
     public record Workers(int live, int seen, boolean anyInOutage, List<WorkerView> list) {}
 
