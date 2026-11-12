@@ -42,6 +42,9 @@ source "$SCENARIO_FILE"
 PROJECT=streamflow-bench
 ENV_FILE="benchmarks/.bench.env"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+# Provenance is captured once, before the first repetition (the image must be built from this tree).
+GIT_COMMIT="$(git rev-parse HEAD)"
+GIT_DIRTY="$( [ -n "$(git status --porcelain)" ] && echo true || echo false )"
 OUT_ROOT="benchmarks/results/$STAMP-$NAME"
 PY="$(command -v python3 2>/dev/null || true)"
 if [ -z "$PY" ] || ! "$PY" -c 'import sys' >/dev/null 2>&1; then PY="$(command -v python)"; fi
@@ -155,8 +158,9 @@ def sh(*args):
         return f"unavailable: {e}"
 info = json.loads(sh("docker", "info", "--format", "{{json .}}") or "{}")
 manifest = {
-    "gitCommit": sh("git", "rev-parse", "HEAD"),
-    "gitDirty": sh("git", "status", "--porcelain") != "",
+    "gitCommit": "$GIT_COMMIT",
+    "gitDirty": "$GIT_DIRTY" == "true",
+    "imageCreated": sh("docker", "image", "inspect", "--format", "{{.Created}}", "streamflow-app:local"),
     "scenarioFile": "$SCENARIO_FILE",
     "scenario": {k: v for k, v in {
         "NAME": "$NAME", "WORKLOAD": "$WORKLOAD", "EVENTS": "$EVENTS", "RATE": "$RATE", "USERS": "$USERS",
