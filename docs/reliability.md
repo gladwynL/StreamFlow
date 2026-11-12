@@ -79,7 +79,7 @@ claim above holds in both modes: the reliability suite runs twice in CI, once pe
 | 34 | A crash after the fallback has committed some records, before any offset commit, loses nothing and applies nothing twice; the failing record is dead-lettered once | `BatchProcessingIT` |
 | 35 | Concurrent batches with overlapping events apply each event exactly once, without deadlock failures | `BatchProcessingIT` |
 | 36 | Retry limits, dead-letter provenance and outage behaviour are the same as in record mode | `RetryIT`, `DeadLetterIT`, `DatabaseOutageIT` (both modes) |
-| 37 | Every benchmark run reconciled exactly (97 runs, including worker kills) | `docs/benchmarks/results.md`, `benchmarks/results/` |
+| 37 | Every benchmark run reconciled exactly (104 runs: the 97 of the Phase 5 matrix, including worker kills, and 7 Phase 6 checks) | `docs/benchmarks/results.md`, `benchmarks/results/` |
 
 ## Hardening (Phase 6)
 

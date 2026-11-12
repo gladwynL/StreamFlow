@@ -208,6 +208,23 @@ With a hot key the hot partition fills proportionally faster (57 % of traffic on
   time to react to a database outage; and Spring Kafka clears the error handler's failure state after a successful
   batch, which could reset a record's attempt count (docs/verification/spring-kafka-behavior.md).
 
+## Phase 6 bounded regression check
+
+Phase 6 changed no processing hot-path code (only failure handling, status and documentation), so the matrix was not
+rerun. A bounded check on 2026-11-12, after the laptop's restart, gave lower absolute numbers than Phase 5 for
+both modes (batch 13,745 /s, record 626 /s, one run each). To separate code from conditions, the Phase 5 image
+(`c479799`) and the Phase 6 image (`a01f28b`) were run back to back in record mode, two repetitions each:
+
+| Image | Record drain, 1 × 3 | WAL fsync time per flush |
+|---|---|---|
+| Phase 5 `c479799` | 716 /s, 733 /s | 1.17 ms, 1.14 ms |
+| Phase 6 `a01f28b` | 702 /s, 693 /s | 1.18 ms, 1.21 ms |
+
+The two images differ by about 4 %, within the run-to-run spread seen in Phase 5; both are below the Phase 5
+figures because the host's commits were slower that day (about 1.15–1.2 ms per fsync against about 0.94 ms). No
+Phase 6 regression is evident; with two runs each, a difference of a few percent cannot be excluded. Raw results:
+`benchmarks/results/*-ab-record-p5`, `*-ab-record-p6`.
+
 ## 10. Limitations and untested configurations
 
 - One host: no network between components, one broker, one database. Scaling across machines is not measured.

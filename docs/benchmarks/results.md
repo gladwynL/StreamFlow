@@ -42,6 +42,11 @@ repetitions that reconciled as PASS. Methodology and interpretation: [methodolog
 | `dash-record-1w-c3 @cbc5cc3` | 3 | RECORD | 1 × 3 | 18,418 (8,261–20,753) | 948 (941–1,068) | 63.3 (56.2–63.8) | 39,914 (39,778–48,816) / 66,928 (60,239–70,643) / 69,822 (63,759–74,602) | 60,000 | 0 |
 | `dash-batch-1w-c3 @cbc5cc3` | 3 | BATCH | 1 × 3 | 45,590 (44,200–46,413) | 18,861 (16,554–19,990) | 25.4 (24.0–29.0) | 27,286 (24,908–32,131) / 34,067 (32,024–38,549) / 34,776 (32,783–39,037) | 480,000 | 0 |
 | `profile-batch-1w-c3 @cbc5cc3` | 1 | BATCH | 1 × 3 | 60,108 | 17,021 | 28.2 | 27,813 / 37,032 / 37,978 | 480,000 | 0 |
+| `smoke @c479799` | 1 | BATCH | 1 × 3 | 5,665 | 8,743 | 0.6 | 11,222 / 11,427 / 11,580 | 5,000 | 0 |
+| `drain-batch-1w-c3 @c479799` | 1 | BATCH | 1 × 3 | 66,887 | 13,745 | 34.9 | 34,708 / 44,817 / 45,993 | 480,000 | 0 |
+| `drain-record-1w-c3 @c479799` | 1 | RECORD | 1 × 3 | 14,713 | 626 | 95.8 | 67,553 / 103,523 / 107,861 | 60,000 | 0 |
+| `ab-record-p5 @a01f28b` | 2 | RECORD | 1 × 3 | 13,549 (11,631–15,467) | 725 (716–733) | 82.8 (81.9–83.7) | 63,657 (61,625–65,688) / 93,657 (91,233–96,080) / 97,133 (94,627–99,638) | 60,000 | 0 |
+| `ab-record-p6 @a01f28b` | 2 | RECORD | 1 × 3 | 22,921 (16,978–28,865) | 697 (693–702) | 86.0 (85.5–86.6) | 60,454 (56,473–64,436) / 94,577 (91,172–97,981) / 98,629 (95,076–102,182) | 60,000 | 0 |
 
 ## Database work per run
 
@@ -80,6 +85,11 @@ repetitions that reconciled as PASS. Methodology and interpretation: [methodolog
 | `dash-record-1w-c3 @cbc5cc3` | 60,664 (60,575–60,665) | 49,126 (48,074–50,258) | 42,924 (39,598–44,467) | 26,490 (24,292–28,057) | 1.0 (1.0–1.0) |
 | `dash-batch-1w-c3 @cbc5cc3` | 1,597 (1,568–1,609) | 844 (804–892) | 1,902 (1,459–2,160) | 48,154 (45,687–49,711) | 300.6 (298.3–306.1) |
 | `profile-batch-1w-c3 @cbc5cc3` | 1,163 | 873 | 1,428 | 49,372 | 412.7 |
+| `smoke @c479799` | 122 | 18 | 43 | 572 | 41.0 |
+| `drain-batch-1w-c3 @c479799` | 1,192 | 917 | 3,446 | 62,815 | 402.7 |
+| `drain-record-1w-c3 @c479799` | 60,238 | 50,645 | 71,554 | 38,571 | 1.0 |
+| `ab-record-p5 @a01f28b` | 60,200 (60,163–60,238) | 54,447 (54,330–54,564) | 62,901 (61,773–64,028) | 35,427 (34,587–36,266) | 1.0 (1.0–1.0) |
+| `ab-record-p6 @a01f28b` | 60,200 (60,126–60,273) | 53,932 (53,434–54,431) | 64,562 (63,057–66,067) | 36,556 (36,514–36,598) | 1.0 (1.0–1.0) |
 
 ## Container resources while events were processed
 
@@ -120,6 +130,11 @@ CPU is in percent of one core (Docker stats, about one sample per second); memor
 | `dash-record-1w-c3 @cbc5cc3` | 57 (53–67) / 145 (112–155) | 118 (111–123) / 135 (127–143) | 8 (6–9) | 275 (272–275) | 356 (356–362) |
 | `dash-batch-1w-c3 @cbc5cc3` | 72 (64–83) / 157 (108–223) | 185 (181–205) / 221 (217–269) | 10 (9–13) | 280 (279–281) | 363 (363–365) |
 | `profile-batch-1w-c3 @cbc5cc3` | 78 / 125 | 173 / 213 | 14 | 316 | 352 |
+| `smoke @c479799` | — / — | — / — | — | — | — |
+| `drain-batch-1w-c3 @c479799` | 95 / 296 | 196 / 286 | 28 | 277 | 301 |
+| `drain-record-1w-c3 @c479799` | 81 / 253 | 117 / 163 | 8 | 272 | 293 |
+| `ab-record-p5 @a01f28b` | 85 (82–88) / 308 (305–311) | 126 (125–127) / 167 (150–184) | 8 (7–10) | 274 (270–277) | 296 (296–297) |
+| `ab-record-p6 @a01f28b` | 84 (84–85) / 241 (227–254) | 124 (122–126) / 151 (142–160) | 8 (7–9) | 272 (270–274) | 302 (297–307) |
 
 ## Partition distribution
 
@@ -160,6 +175,11 @@ Skew = events on the busiest partition ÷ mean events per partition (1.0 = perfe
 | `dash-record-1w-c3 @cbc5cc3` | 1.06 | 9875, 9611, 9985, 10113, 9850, 10566 |
 | `dash-batch-1w-c3 @cbc5cc3` | 1.05 | 79359, 76905, 79892, 80827, 79256, 83761 |
 | `profile-batch-1w-c3 @cbc5cc3` | 1.05 | 79359, 76905, 79892, 80827, 79256, 83761 |
+| `smoke @c479799` | 1.09 | 849, 777, 797, 840, 830, 907 |
+| `drain-batch-1w-c3 @c479799` | 1.05 | 79359, 76905, 79892, 80827, 79256, 83761 |
+| `drain-record-1w-c3 @c479799` | 1.06 | 9875, 9611, 9985, 10113, 9850, 10566 |
+| `ab-record-p5 @a01f28b` | 1.06 | 9875, 9611, 9985, 10113, 9850, 10566 |
+| `ab-record-p6 @a01f28b` | 1.06 | 9875, 9611, 9985, 10113, 9850, 10566 |
 
 ## Worker kill and recovery
 
@@ -538,6 +558,61 @@ waited from its Kafka append to processing.
 | 635 | 1 | 634.901 | `SELECT count(*) FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.` |
 | 330 | 1 | 329.631 | `WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT cou` |
 
+**`smoke @c479799`**
+
+| Total ms | Calls | Mean ms | Statement |
+|---|---|---|---|
+| 273 | 12 | 22.769 | `INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) SELECT * FROM unnest($` |
+| 173 | 12 | 14.421 | `INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset, run_id, run_se` |
+| 78 | 12 | 6.519 | `WITH sample AS ( SELECT p, (SELECT count(*) FROM unnest(ARRAY[$1 /*, ... */]::bigint[]) AS bound WHERE bound <` |
+| 7 | 1 | 6.911 | `WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT cou` |
+| 5 | 1 | 5.311 | `SELECT count(*) FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.` |
+| 5 | 12 | 0.442 | `INSERT INTO event_stats_minute (bucket_start, event_type, kafka_partition, event_count, amount_cents) SELECT d` |
+
+**`drain-batch-1w-c3 @c479799`**
+
+| Total ms | Calls | Mean ms | Statement |
+|---|---|---|---|
+| 32,007 | 970 | 32.997 | `INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) SELECT * FROM unnest($` |
+| 14,765 | 970 | 15.222 | `INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset, run_id, run_se` |
+| 9,882 | 970 | 10.188 | `WITH sample AS ( SELECT p, (SELECT count(*) FROM unnest(ARRAY[$1 /*, ... */]::bigint[]) AS bound WHERE bound <` |
+| 1,845 | 1 | 1844.652 | `SELECT count(*) FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.` |
+| 1,083 | 1 | 1082.720 | `SELECT count(*) FROM ( SELECT run_seq FROM ( SELECT run_seq, event_id FROM processed_events WHERE run_id = $1 ` |
+| 887 | 1 | 887.204 | `WITH sink AS ( SELECT run_seq FROM processed_events WHERE run_id = $1 UNION SELECT run_seq FROM dead_letter_ev` |
+
+**`drain-record-1w-c3 @c479799`**
+
+| Total ms | Calls | Mean ms | Statement |
+|---|---|---|---|
+| 28,370 | 58,553 | 0.484 | `WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_of` |
+| 9,102 | 60,000 | 0.152 | `INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) VALUES ($1, $2, $3, $4` |
+| 671 | 1,447 | 0.464 | `WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_of` |
+| 87 | 1 | 87.160 | `WITH sink AS ( SELECT run_seq FROM processed_events WHERE run_id = $1 UNION SELECT run_seq FROM dead_letter_ev` |
+| 80 | 1 | 79.912 | `SELECT count(*) FROM ( SELECT run_seq FROM ( SELECT run_seq, event_id FROM processed_events WHERE run_id = $1 ` |
+| 67 | 1 | 66.917 | `WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT cou` |
+
+**`ab-record-p5 @a01f28b`**
+
+| Total ms | Calls | Mean ms | Statement |
+|---|---|---|---|
+| 26,589 | 58,553 | 0.454 | `WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_of` |
+| 8,528 | 60,000 | 0.142 | `INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) VALUES ($1, $2, $3, $4` |
+| 638 | 1,447 | 0.441 | `WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_of` |
+| 120 | 1 | 119.898 | `WITH sink AS ( SELECT run_seq FROM processed_events WHERE run_id = $1 UNION SELECT run_seq FROM dead_letter_ev` |
+| 74 | 1 | 73.908 | `SELECT count(*) FROM ( SELECT run_seq FROM ( SELECT run_seq, event_id FROM processed_events WHERE run_id = $1 ` |
+| 68 | 1 | 68.127 | `WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT cou` |
+
+**`ab-record-p6 @a01f28b`**
+
+| Total ms | Calls | Mean ms | Statement |
+|---|---|---|---|
+| 26,987 | 58,553 | 0.461 | `WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_of` |
+| 8,500 | 60,000 | 0.142 | `INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) VALUES ($1, $2, $3, $4` |
+| 643 | 1,447 | 0.444 | `WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_of` |
+| 98 | 1 | 98.216 | `SELECT count(*) FROM ( SELECT run_seq FROM ( SELECT run_seq, event_id FROM processed_events WHERE run_id = $1 ` |
+| 81 | 1 | 81.130 | `WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT cou` |
+| 54 | 60,013 | 0.001 | `BEGIN` |
+
 ## Charts
 
 ![Consumer throughput](charts/consumer-throughput.svg)
@@ -549,6 +624,7 @@ waited from its Kafka append to processing.
 |---|---|---|---|---|---|
 | `76d5330` | 5 | 725 (654–869) | 82.8 (69.1–91.7) | 32,285 (26,507–36,771) | 52,438 (45,170–57,414) |
 | `641bcaa` | 5 | 941 (783–983) | 63.7 (61.0–76.6) | 25,101 (22,803–32,358) | 46,095 (45,046–53,741) |
+| `c479799` | 1 | 626 | 95.8 | 38,571 | 71,554 |
 
 ## Consumer scaling (6 partitions, backlog drain)
 
@@ -679,3 +755,10 @@ Kafka append to start of the processing transaction, exact percentiles over ever
 | `benchmarks\results\20261112T085552Z-dash-batch-1w-c3\r2` | cbc5cc3 | PASS |
 | `benchmarks\results\20261112T085552Z-dash-batch-1w-c3\r3` | cbc5cc3 | PASS |
 | `benchmarks\results\20261112T090143Z-profile-batch-1w-c3\r1` | cbc5cc3 | PASS |
+| `benchmarks\results\20261112T233834Z-smoke\r1` | c479799 | PASS |
+| `benchmarks\results\20261112T233955Z-drain-batch-1w-c3\r1` | c479799 | PASS |
+| `benchmarks\results\20261112T234143Z-drain-record-1w-c3\r1` | c479799 | PASS |
+| `benchmarks\results\20261112T234552Z-ab-record-p5\r1` | a01f28b | PASS |
+| `benchmarks\results\20261112T234552Z-ab-record-p5\r2` | a01f28b | PASS |
+| `benchmarks\results\20261112T235109Z-ab-record-p6\r1` | a01f28b | PASS |
+| `benchmarks\results\20261112T235109Z-ab-record-p6\r2` | a01f28b | PASS |
