@@ -1,0 +1,590 @@
+{
+  "phase" : "OBSERVE",
+  "scenario" : "adhoc",
+  "environment" : {
+    "javaVersion" : "21.0.13+9-LTS",
+    "jvm" : "OpenJDK 64-Bit Server VM 21.0.13+9-LTS",
+    "jvmArguments" : [ "-XX:MaxRAMPercentage=70", "-XX:+ExitOnOutOfMemoryError" ],
+    "availableProcessors" : 12,
+    "maxHeapBytes" : 545390592,
+    "os" : "Linux 6.18.33.2-microsoft-standard-WSL2",
+    "eventsTopic" : "bench.scale-record-6w-c1-20261112t063459z-r1.events",
+    "partitions" : 6,
+    "consumerGroup" : "bench-scale-record-6w-c1-20261112t063459z-r1",
+    "postgres" : {
+      "commit_delay" : "0",
+      "fsync" : "on",
+      "full_page_writes" : "on",
+      "max_connections" : "80",
+      "max_wal_size" : "1024",
+      "server_version" : "18.6",
+      "shared_buffers" : "32768",
+      "synchronous_commit" : "on",
+      "track_io_timing" : "on",
+      "track_wal_io_timing" : "on",
+      "wal_level" : "replica",
+      "wal_sync_method" : "fdatasync"
+    },
+    "benchVariables" : {
+      "BENCH_CONCURRENCY" : "1",
+      "BENCH_PARTITIONS" : "6",
+      "BENCH_PROCESSING_MODE" : "RECORD",
+      "BENCH_SCENARIO" : "scale-record-6w-c1",
+      "BENCH_WORKERS" : "6"
+    }
+  },
+  "runId" : "cafb37da-ccc5-44da-b8c8-c9d245a34cf0",
+  "observeStartedEpochMs" : 1794465373326,
+  "drained" : true,
+  "observedSeconds" : 47.027191937,
+  "timeline" : [ {
+    "t" : 0,
+    "processed" : 9303,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7875, 8611, 8985, 8113, 8850, 9566 ],
+    "members" : 6,
+    "lag" : 52000
+  }, {
+    "t" : 1629,
+    "processed" : 10739,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7875, 8111, 8485, 8113, 8350, 9066 ],
+    "members" : 6,
+    "lag" : 50000
+  }, {
+    "t" : 2964,
+    "processed" : 12227,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7375, 8111, 8485, 7613, 8350, 9066 ],
+    "members" : 6,
+    "lag" : 49000
+  }, {
+    "t" : 4279,
+    "processed" : 13565,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7375, 7611, 7985, 7613, 7850, 8566 ],
+    "members" : 6,
+    "lag" : 47000
+  }, {
+    "t" : 5521,
+    "processed" : 14723,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7375, 7611, 7985, 7613, 7850, 8566 ],
+    "members" : 6,
+    "lag" : 47000
+  }, {
+    "t" : 6780,
+    "processed" : 16326,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 6875, 7111, 7985, 7113, 7350, 8066 ],
+    "members" : 6,
+    "lag" : 44500
+  }, {
+    "t" : 8044,
+    "processed" : 17498,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 6875, 7111, 7485, 7113, 7350, 8066 ],
+    "members" : 6,
+    "lag" : 44000
+  }, {
+    "t" : 9275,
+    "processed" : 19118,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 6375, 7111, 7485, 6613, 7350, 8066 ],
+    "members" : 6,
+    "lag" : 43000
+  }, {
+    "t" : 10517,
+    "processed" : 20379,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 6375, 6611, 6985, 6613, 6850, 7566 ],
+    "members" : 6,
+    "lag" : 41000
+  }, {
+    "t" : 11785,
+    "processed" : 21295,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5875, 6611, 6985, 6113, 6850, 7566 ],
+    "members" : 6,
+    "lag" : 40000
+  }, {
+    "t" : 13155,
+    "processed" : 22260,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5875, 6611, 6985, 6113, 6850, 7066 ],
+    "members" : 6,
+    "lag" : 39500
+  }, {
+    "t" : 14434,
+    "processed" : 23337,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5875, 6111, 6485, 6113, 6350, 7066 ],
+    "members" : 6,
+    "lag" : 38000
+  }, {
+    "t" : 15688,
+    "processed" : 24829,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5375, 6111, 6485, 5613, 6350, 7066 ],
+    "members" : 6,
+    "lag" : 37000
+  }, {
+    "t" : 16946,
+    "processed" : 26170,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5375, 5611, 5985, 5613, 5850, 6566 ],
+    "members" : 6,
+    "lag" : 35000
+  }, {
+    "t" : 18221,
+    "processed" : 27478,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4875, 5611, 5985, 5113, 5850, 6566 ],
+    "members" : 6,
+    "lag" : 34000
+  }, {
+    "t" : 19458,
+    "processed" : 28811,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4875, 5111, 5485, 5113, 5350, 6066 ],
+    "members" : 6,
+    "lag" : 32000
+  }, {
+    "t" : 20694,
+    "processed" : 30466,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4375, 5111, 5485, 4613, 5350, 6066 ],
+    "members" : 6,
+    "lag" : 31000
+  }, {
+    "t" : 21937,
+    "processed" : 32081,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4375, 4611, 4985, 4613, 4850, 5566 ],
+    "members" : 6,
+    "lag" : 29000
+  }, {
+    "t" : 23153,
+    "processed" : 33231,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 3875, 4611, 4985, 4113, 4850, 5566 ],
+    "members" : 6,
+    "lag" : 28000
+  }, {
+    "t" : 24407,
+    "processed" : 35139,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 3875, 4111, 4485, 4113, 4350, 5066 ],
+    "members" : 6,
+    "lag" : 26000
+  }, {
+    "t" : 25645,
+    "processed" : 36771,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 3375, 4111, 4485, 3613, 4350, 5066 ],
+    "members" : 6,
+    "lag" : 25000
+  }, {
+    "t" : 26904,
+    "processed" : 38330,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 3375, 3611, 3985, 3613, 3850, 4566 ],
+    "members" : 6,
+    "lag" : 23000
+  }, {
+    "t" : 28140,
+    "processed" : 40121,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 2875, 3611, 3985, 3113, 3850, 4066 ],
+    "members" : 6,
+    "lag" : 21500
+  }, {
+    "t" : 29382,
+    "processed" : 41547,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 2875, 3111, 3485, 3113, 3350, 4066 ],
+    "members" : 6,
+    "lag" : 20000
+  }, {
+    "t" : 30635,
+    "processed" : 42806,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 2375, 3111, 3485, 2613, 3350, 4066 ],
+    "members" : 6,
+    "lag" : 19000
+  }, {
+    "t" : 31860,
+    "processed" : 44226,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 2375, 2611, 2985, 2613, 2850, 3566 ],
+    "members" : 6,
+    "lag" : 17000
+  }, {
+    "t" : 33093,
+    "processed" : 46023,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 1875, 2611, 2985, 2113, 2850, 3066 ],
+    "members" : 6,
+    "lag" : 15500
+  }, {
+    "t" : 34318,
+    "processed" : 47689,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 1875, 2111, 2485, 2113, 2350, 3066 ],
+    "members" : 6,
+    "lag" : 14000
+  }, {
+    "t" : 35606,
+    "processed" : 49208,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 1375, 1611, 2485, 1613, 2350, 2566 ],
+    "members" : 6,
+    "lag" : 12000
+  }, {
+    "t" : 36857,
+    "processed" : 51106,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 875, 1611, 1985, 1113, 1850, 2566 ],
+    "members" : 6,
+    "lag" : 10000
+  }, {
+    "t" : 38134,
+    "processed" : 52954,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 875, 1111, 1485, 1113, 1350, 2066 ],
+    "members" : 6,
+    "lag" : 8000
+  }, {
+    "t" : 39393,
+    "processed" : 54337,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 375, 1111, 1485, 613, 1350, 2066 ],
+    "members" : 6,
+    "lag" : 7000
+  }, {
+    "t" : 40630,
+    "processed" : 56165,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 235, 444, 985, 435, 850, 1566 ],
+    "members" : 6,
+    "lag" : 4515
+  }, {
+    "t" : 41867,
+    "processed" : 57712,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 444, 836, 0, 696, 1351 ],
+    "members" : 6,
+    "lag" : 3327
+  }, {
+    "t" : 43091,
+    "processed" : 58667,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 336, 0, 196, 851 ],
+    "members" : 6,
+    "lag" : 1383
+  }, {
+    "t" : 44343,
+    "processed" : 59497,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 0, 851 ],
+    "members" : 6,
+    "lag" : 851
+  }, {
+    "t" : 45575,
+    "processed" : 59947,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 0, 351 ],
+    "members" : 6,
+    "lag" : 351
+  }, {
+    "t" : 46783,
+    "processed" : 60000,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 0, 0 ],
+    "members" : 6,
+    "lag" : 0
+  } ],
+  "acked" : 60000,
+  "reconciliation" : {
+    "result" : "PASS",
+    "reasons" : [ ],
+    "drained" : true,
+    "attempted" : 60000,
+    "acked" : 60000,
+    "processed" : 60000,
+    "duplicatesSuppressed" : 0,
+    "deadLetterUnresolved" : 0
+  },
+  "consumer" : {
+    "events" : 60000,
+    "firstProcessedAt" : "2026-11-12T06:35:52.530098Z",
+    "lastProcessedAt" : "2026-11-12T06:36:59.052944Z",
+    "spanSeconds" : 66.522846,
+    "eventsPerSecond" : 901.9307442137998
+  },
+  "latency" : {
+    "samples" : 60000,
+    "p50Millis" : 64758.965,
+    "p95Millis" : 85210.85465,
+    "p99Millis" : 88094.73143,
+    "maxMillis" : 89589.944000
+  },
+  "partitions" : [ {
+    "partition" : 0,
+    "events" : 9875,
+    "spanSeconds" : 61.489657
+  }, {
+    "partition" : 1,
+    "events" : 9611,
+    "spanSeconds" : 58.051446
+  }, {
+    "partition" : 2,
+    "events" : 9985,
+    "spanSeconds" : 59.931599
+  }, {
+    "partition" : 3,
+    "events" : 10113,
+    "spanSeconds" : 62.380575
+  }, {
+    "partition" : 4,
+    "events" : 9850,
+    "spanSeconds" : 59.365465
+  }, {
+    "partition" : 5,
+    "events" : 10566,
+    "spanSeconds" : 61.357542
+  } ],
+  "topStatements" : [ {
+    "query" : "WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset, run_id, run_seq, user_id, session_id, synthetic, amount_cents, currency, payload) VALUES ($1, $2, $3, $4",
+    "calls" : 58553,
+    "total_ms" : 31462.7,
+    "mean_ms" : 0.5373,
+    "rows" : 58553,
+    "shared_blks_hit" : 1279287,
+    "shared_blks_read" : 7,
+    "wal_records" : 648392,
+    "wal_bytes" : 58323786
+  }, {
+    "query" : "INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (event_id) DO NOTHING",
+    "calls" : 60000,
+    "total_ms" : 11230.0,
+    "mean_ms" : 0.1872,
+    "rows" : 60000,
+    "shared_blks_hit" : 632161,
+    "shared_blks_read" : 2,
+    "wal_records" : 250968,
+    "wal_bytes" : 22019644
+  }, {
+    "query" : "WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset, run_id, run_seq, user_id, session_id, synthetic, amount_cents, currency, payload) VALUES ($1, $2, $3, $4",
+    "calls" : 1447,
+    "total_ms" : 600.8,
+    "mean_ms" : 0.4152,
+    "rows" : 1447,
+    "shared_blks_hit" : 32251,
+    "shared_blks_read" : 0,
+    "wal_records" : 16039,
+    "wal_bytes" : 1595640
+  }, {
+    "query" : "SELECT count(*) FROM ( SELECT run_seq FROM ( SELECT run_seq, event_id FROM processed_events WHERE run_id = $1 UNION SELECT run_seq, event_id FROM dead_letter_events WHERE run_id = $2 AND run_seq IS NOT NULL AND event_id ",
+    "calls" : 1,
+    "total_ms" : 160.4,
+    "mean_ms" : 160.4088,
+    "rows" : 1,
+    "shared_blks_hit" : 688,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "WITH sink AS ( SELECT run_seq FROM processed_events WHERE run_id = $1 UNION SELECT run_seq FROM dead_letter_events WHERE run_id = $2 AND run_seq IS NOT NULL ) SELECT count(*) FROM sink s WHERE s.run_seq < $5 OR s.run_seq",
+    "calls" : 1,
+    "total_ms" : 135.0,
+    "mean_ms" : 135.0459,
+    "rows" : 1,
+    "shared_blks_hit" : 28141,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "INSERT INTO worker_heartbeats (worker_id, host, started_at, last_seen_at, processed, duplicates, failures_bad_record, failures_transient, failures_infra, dead_lettered, dead_letter_failures, rebalances, consumer_errors, ",
+    "calls" : 213,
+    "total_ms" : 83.0,
+    "mean_ms" : 0.3898,
+    "rows" : 213,
+    "shared_blks_hit" : 1665,
+    "shared_blks_read" : 0,
+    "wal_records" : 859,
+    "wal_bytes" : 59651
+  }, {
+    "query" : "BEGIN",
+    "calls" : 60028,
+    "total_ms" : 57.6,
+    "mean_ms" : 0.0010,
+    "rows" : 0,
+    "shared_blks_hit" : 0,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT count(*) AS n, percentile_cont($4) WITHIN GROUP (ORDER BY ms) AS p50, percentile_cont($5) WITHIN GROUP (ORDER BY ",
+    "calls" : 1,
+    "total_ms" : 47.6,
+    "mean_ms" : 47.6306,
+    "rows" : 1,
+    "shared_blks_hit" : 1655,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.run_id = $2 AND p.run_seq = s) AND NOT EXISTS (SELECT $7 FROM publish_failures f WHERE f.run_id = $3 AND f.seq",
+    "calls" : 1,
+    "total_ms" : 33.4,
+    "mean_ms" : 33.4366,
+    "rows" : 1,
+    "shared_blks_hit" : 686,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT s FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.run_id = $2 AND p.run_seq = s) AND NOT EXISTS (SELECT $7 FROM publish_failures f WHERE f.run_id = $3 AND f.sequence =",
+    "calls" : 1,
+    "total_ms" : 33.0,
+    "mean_ms" : 32.9635,
+    "rows" : 0,
+    "shared_blks_hit" : 686,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT name, setting FROM pg_settings WHERE name IN ($1 /*, ... */) ORDER BY name",
+    "calls" : 2,
+    "total_ms" : 12.5,
+    "mean_ms" : 6.2252,
+    "rows" : 24,
+    "shared_blks_hit" : 6,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) FROM events WHERE run_id = $1",
+    "calls" : 1,
+    "total_ms" : 11.9,
+    "mean_ms" : 11.8676,
+    "rows" : 1,
+    "shared_blks_hit" : 1036,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "INSERT INTO run_reconciliations (run_id, result, details) VALUES ($1, $2, CAST($3 AS jsonb))",
+    "calls" : 1,
+    "total_ms" : 11.8,
+    "mean_ms" : 11.7585,
+    "rows" : 1,
+    "shared_blks_hit" : 57,
+    "shared_blks_read" : 2,
+    "wal_records" : 7,
+    "wal_bytes" : 1270
+  }, {
+    "query" : "SELECT kafka_partition, count(*) AS events, extract($2 FROM max(ingested_at) - min(ingested_at)) AS span_seconds FROM events WHERE run_id = $1 GROUP BY kafka_partition ORDER BY kafka_partition",
+    "calls" : 1,
+    "total_ms" : 11.1,
+    "mean_ms" : 11.1028,
+    "rows" : 6,
+    "shared_blks_hit" : 1647,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) AS events, min(ingested_at) AS first_at, max(ingested_at) AS last_at, extract($2 FROM max(ingested_at) - min(ingested_at)) AS span_seconds FROM events WHERE run_id = $1",
+    "calls" : 1,
+    "total_ms" : 10.1,
+    "mean_ms" : 10.1286,
+    "rows" : 1,
+    "shared_blks_hit" : 1647,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  } ],
+  "database" : {
+    "xact_commit" : 59786,
+    "xact_rollback" : 0,
+    "tup_inserted" : 117901,
+    "tup_updated" : 176885,
+    "blks_read" : 19,
+    "blks_hit" : 1964931,
+    "deadlocks" : 0,
+    "temp_bytes" : 0,
+    "active_time" : 219951.765,
+    "session_time" : 962261.154
+  },
+  "walIo" : [ {
+    "backend_type" : "client backend",
+    "object" : "wal",
+    "context" : "normal",
+    "writes" : 30396,
+    "write_bytes" : 332963840,
+    "write_time" : 3857.5640000000003,
+    "fsyncs" : 30391,
+    "fsync_time" : 47110.729
+  }, {
+    "backend_type" : "autovacuum worker",
+    "object" : "wal",
+    "context" : "normal",
+    "writes" : 4,
+    "write_bytes" : 40960,
+    "write_time" : 0.10300000000000001,
+    "fsyncs" : 4,
+    "fsync_time" : 5.494
+  }, {
+    "backend_type" : "walwriter",
+    "object" : "wal",
+    "context" : "normal",
+    "writes" : 23,
+    "write_bytes" : 253952,
+    "write_time" : 5.799,
+    "fsyncs" : 23,
+    "fsync_time" : 49.38
+  } ],
+  "tableSizes" : {
+    "ledger_bytes" : 11313152,
+    "events_bytes" : 24510464
+  }
+}

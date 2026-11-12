@@ -253,6 +253,25 @@ The Docker VM process (`vmmemWSL`) used about 1.26 GB of host memory at the seco
 are idle figures from two samples, not load measurements; behaviour under event traffic is
 measured in Phase 5.
 
+### Benchmarks (Phase 5)
+
+Performance is measured with the benchmark harness, not with the development stack:
+[`docs/benchmarks/README.md`](benchmarks/README.md) (results) and
+[`docs/benchmarks/methodology.md`](benchmarks/methodology.md) (method and reproduction). In short:
+
+```bash
+docker compose build migrate
+benchmarks/run.sh benchmarks/scenarios/drain-batch-1w-c3.env 3
+python benchmarks/analyze.py
+```
+
+It runs on its own Compose project (`streamflow-bench`, ports 19094 and 15432) and never touches the development
+stack or its data. Check memory first (the script refuses to start below 5 GB of commit headroom; override with
+`BENCH_MIN_HEADROOM_GB`) and stop the benchmark stack afterwards.
+
+Processing mode: workers default to batch mode since Phase 5; set `STREAMFLOW_WORKER_PROCESSING_MODE=RECORD` on the
+worker for the record (reference) mode.
+
 ### Phase 4 observations under synthetic load (not benchmarks)
 
 Observed 2026-11-11 on the same laptop while verifying the dashboard: the Compose stack with one `worker`

@@ -128,6 +128,20 @@ jobs:
             frontend/playwright-report
             frontend/test-results
           retention-days: 7
+      # Phase 5: the benchmark harness end to end on a clean Linux checkout (a small scenario; it checks that the
+      # harness and its reconciliation work, not performance).
+      - name: Run the benchmark harness smoke scenario
+        run: |
+          mkdir -p benchmarks/results benchmarks/jfr
+          chmod 777 benchmarks/results benchmarks/jfr
+          BENCH_MIN_HEADROOM_GB=2 benchmarks/run.sh benchmarks/scenarios/smoke.env 1
+          python3 benchmarks/analyze.py benchmarks/results /tmp/bench-results.md
+          grep -q "smoke" /tmp/bench-results.md
+      - name: Stop the benchmark stack
+        if: always()
+        run: |
+          [ -f benchmarks/.bench.env ] && docker compose -p streamflow-bench --env-file benchmarks/.bench.env \
+            -f compose.yaml -f compose.bench.yaml --profile app --profile bench down --volumes || true
       - name: Show the stored reconciliation result
         run: |
           docker compose exec -T postgres psql -U streamflow -d streamflow -c \

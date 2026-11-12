@@ -1,0 +1,67 @@
+{
+  "phase" : "PUBLISH",
+  "scenario" : "scale-batch-1w-c1",
+  "environment" : {
+    "javaVersion" : "21.0.13+9-LTS",
+    "jvm" : "OpenJDK 64-Bit Server VM 21.0.13+9-LTS",
+    "jvmArguments" : [ "-XX:MaxRAMPercentage=70", "-XX:+ExitOnOutOfMemoryError" ],
+    "availableProcessors" : 12,
+    "maxHeapBytes" : 545390592,
+    "os" : "Linux 6.18.33.2-microsoft-standard-WSL2",
+    "eventsTopic" : "bench.scale-batch-1w-c1-20261112t071525z-r1.events",
+    "partitions" : 6,
+    "consumerGroup" : "bench-scale-batch-1w-c1-20261112t071525z-r1",
+    "postgres" : {
+      "commit_delay" : "0",
+      "fsync" : "on",
+      "full_page_writes" : "on",
+      "max_connections" : "80",
+      "max_wal_size" : "1024",
+      "server_version" : "18.6",
+      "shared_buffers" : "32768",
+      "synchronous_commit" : "on",
+      "track_io_timing" : "on",
+      "track_wal_io_timing" : "on",
+      "wal_level" : "replica",
+      "wal_sync_method" : "fdatasync"
+    },
+    "benchVariables" : {
+      "BENCH_CONCURRENCY" : "1",
+      "BENCH_PARTITIONS" : "6",
+      "BENCH_PROCESSING_MODE" : "BATCH",
+      "BENCH_SCENARIO" : "scale-batch-1w-c1",
+      "BENCH_WORKERS" : "1"
+    }
+  },
+  "spec" : {
+    "offeredRatePerSecond" : 100000,
+    "hotUserPercent" : 0,
+    "users" : 10000,
+    "events" : 480000,
+    "seed" : 20261112
+  },
+  "publish" : {
+    "runId" : "cc1799e8-a52b-4323-b393-e61406973b0b",
+    "status" : "COMPLETED",
+    "startedAt" : "2026-11-12T07:15:47.979746175Z",
+    "elapsedSeconds" : 7.247767425,
+    "attempted" : 480000,
+    "acked" : 480000,
+    "failedDefinite" : 0,
+    "failedAmbiguous" : 0,
+    "ackedPerSecond" : 66227.29067496257,
+    "contentHash" : "320d68309a9bfd1d4308d73222d88884a7290d94f71c8437cad26684e03eb5af"
+  },
+  "producerMetrics" : {
+    "batch-size-avg" : 14633.416228191636,
+    "buffer-exhausted-total" : 0.0,
+    "compression-rate-avg" : 0.2285557497500119,
+    "record-error-total" : 0.0,
+    "record-retry-total" : 0.0,
+    "record-send-rate" : 12924.071082390952,
+    "record-size-avg" : 623.6134034893381,
+    "records-per-request-avg" : 796.0199004975125,
+    "request-latency-avg" : 39.708126036484245,
+    "request-latency-max" : 1335.0
+  }
+}

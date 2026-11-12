@@ -1,0 +1,46 @@
+{
+  "gitCommit": "cbc5cc3a720442ffe69a879cc2043b6ff5ca2bb8",
+  "gitDirty": true,
+  "imageCreated": "2026-11-12T05:48:22.180419725Z",
+  "scenarioFile": "benchmarks/scenarios/live-batch-1w-c3-250.env",
+  "scenario": {
+    "NAME": "live-batch-1w-c3-250",
+    "WORKLOAD": "live",
+    "EVENTS": "15000",
+    "RATE": "250",
+    "USERS": "10000",
+    "HOT_USER_PERCENT": "0",
+    "SEED": "20261112",
+    "PARTITIONS": "6",
+    "WORKERS": "1",
+    "CONCURRENCY": "3",
+    "PROCESSING_MODE": "BATCH",
+    "DASHBOARD_CLIENTS": "0",
+    "KILL_WORKER_AFTER": "",
+    "RESTART_KILLED_AFTER": "",
+    "JFR": "0",
+    "WORKER_MEM": "512m"
+  },
+  "repetition": 3,
+  "host": {
+    "cpu": "AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics  ",
+    "os": "Microsoft Windows 11 Pro",
+    "memoryGB": "11.7"
+  },
+  "docker": {
+    "ServerVersion": "29.8.0",
+    "NCPU": 12,
+    "MemTotal": 6034173952,
+    "OperatingSystem": "Docker Desktop",
+    "KernelVersion": "6.18.33.2-microsoft-standard-WSL2"
+  },
+  "compose": "5.5.1",
+  "images": "streamflow-app:local a89f982a7d45",
+  "containerLimits": {
+    "worker": "512m",
+    "loadgen": "768m",
+    "kafka": "1g",
+    "postgres": "768m",
+    "api": "768m"
+  }
+}

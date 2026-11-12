@@ -1,6 +1,6 @@
 # ADR-0013: Batch processing mode
 
-- **Status:** Accepted, 2026-11-12 (Phase 5)
+- **Status:** Accepted, 2026-11-12 (Phase 5); batch is the default processing mode
 - **Implemented:** Phase 5
 
 ## Context
@@ -64,5 +64,9 @@ tracker, as in record mode.
 - A single failing record makes its batch fall back to record mode, so throughput under frequent failures
   approaches record mode; correctness does not change.
 - Processing latency includes the time to accumulate a poll batch; at low traffic batches are small.
-- Whether batch mode becomes the default is decided by measurement (docs/benchmarks/README.md); record mode remains
-  available either way.
+- Measured (docs/benchmarks/README.md): 15,548 events/s against 941 in record mode with one worker × 3 threads,
+  latency equal or better at 250–750 events/s offered. On that evidence and with the reliability suite passing in
+  both modes, batch is the default; record mode remains available (`STREAMFLOW_WORKER_PROCESSING_MODE=RECORD`) and
+  tested.
+- Spring Kafka specifics found while verifying it (failure state cleared after a successful batch, wrapped exception
+  given to the recoverer) are documented in docs/verification/spring-kafka-behavior.md.

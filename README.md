@@ -1,9 +1,8 @@
 # StreamFlow
 
-> **Work in progress.** Phases 1–4 of a seven-phase plan are complete: foundations, the event
-> streaming core, reliability and recovery, and the API and dashboard. Benchmarks (Phase 5) are
-> designed but **not run yet**, so no performance figures are published. This README only describes
-> what exists and has been verified.
+> **Work in progress.** Phases 1–5 of a seven-phase plan are complete: foundations, the event
+> streaming core, reliability and recovery, the API and dashboard, and performance. This README only
+> describes what exists and has been verified.
 
 StreamFlow is a real-time distributed event streaming and analytics platform: synthetic e-commerce
 events are published to Apache Kafka and processed by independent workers into PostgreSQL with
@@ -50,6 +49,16 @@ explicit, tested delivery semantics. The design is in
   values show as a dash. Bounded synthetic runs can be started, stopped and reconciled, and dead
   letters replayed or discarded, behind confirmation dialogs and an operator key held only in
   memory. Accessible (axe-checked, keyboard, reduced motion) and responsive.
+- **Benchmarks** ([`docs/benchmarks/`](docs/benchmarks/README.md)): a headless `loadgen` role and a
+  reproducible harness on an isolated Compose project; every run must reconcile exactly. On one laptop
+  (6-core Ryzen 5 PRO 7540U, Docker Desktop), medians of repeated runs, all 97 reconciled:
+  - one worker drains **15,548 events/s** (14,276–16,598) in the default batch mode and **941 events/s**
+    (783–983) in record mode (one transaction per record);
+  - at 500 events/s offered, batch-mode processing latency is p50 5.8 ms, p95 27.7 ms, p99 361 ms;
+  - the producer publishes **63,247 events/s** (61,679–69,683) acknowledged by Kafka (acks=all);
+  - profiling showed record mode was bound by per-record commit and round-trip latency, not CPU; fewer
+    round trips gave +30 % and batching one commit per poll batch gave 16×, with every reliability test
+    passing in both modes. Scaling, skew, recovery and limits are in the report.
 - **Docker Compose** stack and **GitHub Actions CI** that runs every integration test, a Compose
   smoke test publishing a run that must reconcile as PASS, and Playwright end-to-end tests of the
   dashboard against that stack.
@@ -89,6 +98,8 @@ compose.yaml
   replication factor 1.
 - At high throughput the live stream view samples the newest events (20 per second); the full
   history is in the event API and the analytics.
+- Performance figures come from one laptop where every component shares one CPU and one Docker VM;
+  they are not production capacity figures.
 - No performance figures are published until they are measured (Phase 5).
 
 ## License

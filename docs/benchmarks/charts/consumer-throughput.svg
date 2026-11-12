@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1040" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Consumer throughput (events/s, median; line = range)">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="12" y="22" font-size="14" font-weight="600" fill="#111">Consumer throughput (events/s, median; line = range)</text>
+<text x="252" y="54" text-anchor="end" fill="#333">drain-record-1w-c3 @76d5330</text>
+<rect x="260" y="43" width="14.9" height="16" rx="3" fill="#2a78d6"/>
+<line x1="273.4" x2="277.8" y1="51" y2="51" stroke="#111" stroke-width="1.5"/>
+<text x="280.9" y="55" fill="#111">725 /s</text>
+<text x="252" y="84" text-anchor="end" fill="#333">profile-record-1w-c3 @76d5330</text>
+<rect x="260" y="73" width="16.4" height="16" rx="3" fill="#2a78d6"/>
+<text x="282.4" y="85" fill="#111">798 /s</text>
+<text x="252" y="114" text-anchor="end" fill="#333">drain-record-1w-c3 @641bcaa</text>
+<rect x="260" y="103" width="19.3" height="16" rx="3" fill="#2a78d6"/>
+<line x1="276.1" x2="280.2" y1="111" y2="111" stroke="#111" stroke-width="1.5"/>
+<text x="285.3" y="115" fill="#111">941 /s</text>
+<text x="252" y="144" text-anchor="end" fill="#333">profile-record-1w-c3 @641bcaa</text>
+<rect x="260" y="133" width="19.3" height="16" rx="3" fill="#2a78d6"/>
+<text x="285.3" y="145" fill="#111">943 /s</text>
+<text x="252" y="174" text-anchor="end" fill="#333">drain-batch-1w-c3 @d5287d5</text>
+<rect x="260" y="163" width="274.0" height="16" rx="3" fill="#2a78d6"/>
+<line x1="481.0" x2="568.0" y1="171" y2="171" stroke="#111" stroke-width="1.5"/>
+<text x="540.0" y="175" fill="#111">13,361 /s</text>
+<text x="252" y="204" text-anchor="end" fill="#333">scale-record-1w-c1 @d5287d5</text>
+<rect x="260" y="193" width="7.1" height="16" rx="3" fill="#2a78d6"/>
+<line x1="266.4" x2="267.4" y1="201" y2="201" stroke="#111" stroke-width="1.5"/>
+<text x="273.1" y="205" fill="#111">348 /s</text>
+<text x="252" y="234" text-anchor="end" fill="#333">scale-record-2w-c1 @d5287d5</text>
+<rect x="260" y="223" width="12.8" height="16" rx="3" fill="#2a78d6"/>
+<line x1="272.7" x2="272.8" y1="231" y2="231" stroke="#111" stroke-width="1.5"/>
+<text x="278.8" y="235" fill="#111">622 /s</text>
+<text x="252" y="264" text-anchor="end" fill="#333">scale-record-3w-c1 @d5287d5</text>
+<rect x="260" y="253" width="14.6" height="16" rx="3" fill="#2a78d6"/>
+<line x1="273.6" x2="275.9" y1="261" y2="261" stroke="#111" stroke-width="1.5"/>
+<text x="280.6" y="265" fill="#111">709 /s</text>
+<text x="252" y="294" text-anchor="end" fill="#333">scale-record-6w-c1 @d5287d5</text>
+<rect x="260" y="283" width="20.1" height="16" rx="3" fill="#2a78d6"/>
+<line x1="278.5" x2="280.2" y1="291" y2="291" stroke="#111" stroke-width="1.5"/>
+<text x="286.1" y="295" fill="#111">982 /s</text>
+<text x="252" y="324" text-anchor="end" fill="#333">scale-record-1w-c6 @d5287d5</text>
+<rect x="260" y="313" width="19.4" height="16" rx="3" fill="#2a78d6"/>
+<line x1="279.1" x2="279.8" y1="321" y2="321" stroke="#111" stroke-width="1.5"/>
+<text x="285.4" y="325" fill="#111">946 /s</text>
+<text x="252" y="354" text-anchor="end" fill="#333">scale-batch-1w-c1 @d5287d5</text>
+<rect x="260" y="343" width="124.6" height="16" rx="3" fill="#2a78d6"/>
+<line x1="368.4" x2="422.2" y1="351" y2="351" stroke="#111" stroke-width="1.5"/>
+<text x="390.6" y="355" fill="#111">6,074 /s</text>
+<text x="252" y="384" text-anchor="end" fill="#333">scale-batch-2w-c1 @d5287d5</text>
+<rect x="260" y="373" width="141.9" height="16" rx="3" fill="#2a78d6"/>
+<line x1="357.4" x2="443.1" y1="381" y2="381" stroke="#111" stroke-width="1.5"/>
+<text x="407.9" y="385" fill="#111">6,920 /s</text>
+<text x="252" y="414" text-anchor="end" fill="#333">scale-batch-3w-c1 @d5287d5</text>
+<rect x="260" y="403" width="158.6" height="16" rx="3" fill="#2a78d6"/>
+<line x1="397.5" x2="430.8" y1="411" y2="411" stroke="#111" stroke-width="1.5"/>
+<text x="424.6" y="415" fill="#111">7,735 /s</text>
+<text x="252" y="444" text-anchor="end" fill="#333">scale-batch-6w-c1 @d5287d5</text>
+<rect x="260" y="433" width="127.9" height="16" rx="3" fill="#2a78d6"/>
+<line x1="364.9" x2="414.1" y1="441" y2="441" stroke="#111" stroke-width="1.5"/>
+<text x="393.9" y="445" fill="#111">6,235 /s</text>
+<text x="252" y="474" text-anchor="end" fill="#333">scale-batch-1w-c6 @d5287d5</text>
+<rect x="260" y="463" width="300.4" height="16" rx="3" fill="#2a78d6"/>
+<line x1="500.4" x2="563.8" y1="471" y2="471" stroke="#111" stroke-width="1.5"/>
+<text x="566.4" y="475" fill="#111">14,648 /s</text>
+<text x="252" y="504" text-anchor="end" fill="#333">drain-batch-1w-c3 @49bf2fc</text>
+<rect x="260" y="493" width="318.9" height="16" rx="3" fill="#2a78d6"/>
+<line x1="552.8" x2="600.4" y1="501" y2="501" stroke="#111" stroke-width="1.5"/>
+<text x="584.9" y="505" fill="#111">15,548 /s</text>
+<text x="252" y="534" text-anchor="end" fill="#333">scale-batch-1w-c1 @49bf2fc</text>
+<rect x="260" y="523" width="148.4" height="16" rx="3" fill="#2a78d6"/>
+<line x1="394.7" x2="424.3" y1="531" y2="531" stroke="#111" stroke-width="1.5"/>
+<text x="414.4" y="535" fill="#111">7,235 /s</text>
+<text x="252" y="564" text-anchor="end" fill="#333">scale-batch-2w-c1 @49bf2fc</text>
+<rect x="260" y="553" width="241.6" height="16" rx="3" fill="#2a78d6"/>
+<line x1="383.0" x2="520.3" y1="561" y2="561" stroke="#111" stroke-width="1.5"/>
+<text x="507.6" y="565" fill="#111">11,781 /s</text>
+<text x="252" y="594" text-anchor="end" fill="#333">scale-batch-3w-c1 @49bf2fc</text>
+<rect x="260" y="583" width="243.5" height="16" rx="3" fill="#2a78d6"/>
+<line x1="468.2" x2="565.0" y1="591" y2="591" stroke="#111" stroke-width="1.5"/>
+<text x="509.5" y="595" fill="#111">11,872 /s</text>
+<text x="252" y="624" text-anchor="end" fill="#333">scale-batch-6w-c1 @49bf2fc</text>
+<rect x="260" y="613" width="260.7" height="16" rx="3" fill="#2a78d6"/>
+<line x1="505.7" x2="572.7" y1="621" y2="621" stroke="#111" stroke-width="1.5"/>
+<text x="526.7" y="625" fill="#111">12,712 /s</text>
+<text x="252" y="654" text-anchor="end" fill="#333">scale-batch-1w-c6 @49bf2fc</text>
+<rect x="260" y="643" width="318.1" height="16" rx="3" fill="#2a78d6"/>
+<line x1="538.3" x2="618.1" y1="651" y2="651" stroke="#111" stroke-width="1.5"/>
+<text x="584.1" y="655" fill="#111">15,507 /s</text>
+<text x="252" y="684" text-anchor="end" fill="#333">live-record-1w-c3-250 @cbc5cc3</text>
+<rect x="260" y="673" width="5.2" height="16" rx="3" fill="#2a78d6"/>
+<line x1="265.1" x2="265.2" y1="681" y2="681" stroke="#111" stroke-width="1.5"/>
+<text x="271.2" y="685" fill="#111">252 /s</text>
+<text x="252" y="714" text-anchor="end" fill="#333">live-record-1w-c3-500 @cbc5cc3</text>
+<rect x="260" y="703" width="10.3" height="16" rx="3" fill="#2a78d6"/>
+<line x1="270.3" x2="270.4" y1="711" y2="711" stroke="#111" stroke-width="1.5"/>
+<text x="276.3" y="715" fill="#111">502 /s</text>
+<text x="252" y="744" text-anchor="end" fill="#333">live-record-1w-c3-750 @cbc5cc3</text>
+<rect x="260" y="733" width="15.5" height="16" rx="3" fill="#2a78d6"/>
+<line x1="275.5" x2="275.5" y1="741" y2="741" stroke="#111" stroke-width="1.5"/>
+<text x="281.5" y="745" fill="#111">753 /s</text>
+<text x="252" y="774" text-anchor="end" fill="#333">live-batch-1w-c3-250 @cbc5cc3</text>
+<rect x="260" y="763" width="5.1" height="16" rx="3" fill="#2a78d6"/>
+<line x1="265.1" x2="265.1" y1="771" y2="771" stroke="#111" stroke-width="1.5"/>
+<text x="271.1" y="775" fill="#111">251 /s</text>
+<text x="252" y="804" text-anchor="end" fill="#333">live-batch-1w-c3-500 @cbc5cc3</text>
+<rect x="260" y="793" width="10.3" height="16" rx="3" fill="#2a78d6"/>
+<line x1="270.3" x2="270.3" y1="801" y2="801" stroke="#111" stroke-width="1.5"/>
+<text x="276.3" y="805" fill="#111">502 /s</text>
+<text x="252" y="834" text-anchor="end" fill="#333">live-batch-1w-c3-750 @cbc5cc3</text>
+<rect x="260" y="823" width="15.5" height="16" rx="3" fill="#2a78d6"/>
+<line x1="275.4" x2="275.5" y1="831" y2="831" stroke="#111" stroke-width="1.5"/>
+<text x="281.5" y="835" fill="#111">753 /s</text>
+<text x="252" y="864" text-anchor="end" fill="#333">skew-record-1w-c6-hot50 @cbc5cc3</text>
+<rect x="260" y="853" width="12.2" height="16" rx="3" fill="#2a78d6"/>
+<line x1="272.0" x2="272.7" y1="861" y2="861" stroke="#111" stroke-width="1.5"/>
+<text x="278.2" y="865" fill="#111">594 /s</text>
+<text x="252" y="894" text-anchor="end" fill="#333">kill-record-2w-c3 @cbc5cc3</text>
+<rect x="260" y="883" width="21.2" height="16" rx="3" fill="#2a78d6"/>
+<line x1="281.1" x2="282.4" y1="891" y2="891" stroke="#111" stroke-width="1.5"/>
+<text x="287.2" y="895" fill="#111">1,032 /s</text>
+<text x="252" y="924" text-anchor="end" fill="#333">kill-batch-2w-c3 @cbc5cc3</text>
+<rect x="260" y="913" width="61.8" height="16" rx="3" fill="#2a78d6"/>
+<line x1="321.8" x2="321.9" y1="921" y2="921" stroke="#111" stroke-width="1.5"/>
+<text x="327.8" y="925" fill="#111">3,014 /s</text>
+<text x="252" y="954" text-anchor="end" fill="#333">dash-record-1w-c3 @cbc5cc3</text>
+<rect x="260" y="943" width="19.4" height="16" rx="3" fill="#2a78d6"/>
+<line x1="279.3" x2="281.9" y1="951" y2="951" stroke="#111" stroke-width="1.5"/>
+<text x="285.4" y="955" fill="#111">948 /s</text>
+<text x="252" y="984" text-anchor="end" fill="#333">dash-batch-1w-c3 @cbc5cc3</text>
+<rect x="260" y="973" width="386.8" height="16" rx="3" fill="#2a78d6"/>
+<line x1="599.5" x2="670.0" y1="981" y2="981" stroke="#111" stroke-width="1.5"/>
+<text x="652.8" y="985" fill="#111">18,861 /s</text>
+<text x="252" y="1014" text-anchor="end" fill="#333">profile-batch-1w-c3 @cbc5cc3</text>
+<rect x="260" y="1003" width="349.1" height="16" rx="3" fill="#2a78d6"/>
+<text x="615.1" y="1015" fill="#111">17,021 /s</text>
+</svg>

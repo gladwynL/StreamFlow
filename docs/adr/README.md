@@ -18,3 +18,4 @@ otherwise.
 | [0010](0010-deterministic-simulation.md) | Deterministic content, unique identity |
 | [0011](0011-dashboard-data-path.md) | Dashboard data path |
 | [0012](0012-local-first-resource-budget.md) | Local-first, memory-bounded infrastructure |
+| [0013](0013-batch-processing-mode.md) | Batch processing mode (default since Phase 5) |

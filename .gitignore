@@ -36,3 +36,4 @@ logs/
 benchmarks/.bench.env
 benchmarks/results/**/*.jfr
 benchmarks/jfr/
+benchmarks/results/**/*.log

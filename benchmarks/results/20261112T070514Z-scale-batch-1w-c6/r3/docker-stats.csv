@@ -1,0 +1,25 @@
+epoch_ms,container,cpu_percent,mem_usage
+1794467265669,streamflow-bench-postgres-1,4.58%,83.76MiB / 768MiB
+1794467265669,streamflow-bench-kafka-1,1.93%,560.2MiB / 1GiB
+1794467265669,streamflow-bench-loadgen-run-d0ada0194190,260.40%,84.04MiB / 768MiB
+1794467269385,streamflow-bench-loadgen-run-d0ada0194190,349.27%,166.5MiB / 768MiB
+1794467269385,streamflow-bench-postgres-1,4.62%,87.54MiB / 768MiB
+1794467269385,streamflow-bench-kafka-1,2.93%,559.9MiB / 1GiB
+1794467273785,streamflow-bench-postgres-1,0.02%,82.23MiB / 768MiB
+1794467273785,streamflow-bench-kafka-1,2.51%,562.1MiB / 1GiB
+1794467278075,streamflow-bench-worker-1,286.32%,102.4MiB / 512MiB
+1794467278075,streamflow-bench-postgres-1,0.02%,83.29MiB / 768MiB
+1794467278075,streamflow-bench-kafka-1,2.01%,560MiB / 1GiB
+1794467282081,streamflow-bench-worker-1,434.74%,247.9MiB / 512MiB
+1794467282081,streamflow-bench-postgres-1,0.94%,89.45MiB / 768MiB
+1794467282081,streamflow-bench-kafka-1,2.55%,560MiB / 1GiB
+1794467285974,streamflow-bench-worker-1,273.32%,295.5MiB / 512MiB
+1794467285974,streamflow-bench-postgres-1,185.41%,93.05MiB / 768MiB
+1794467285974,streamflow-bench-kafka-1,11.68%,566.4MiB / 1GiB
+1794467290158,streamflow-bench-loadgen-run-114bb5532e77,297.32%,100.8MiB / 768MiB
+1794467290158,streamflow-bench-worker-1,8.46%,294.8MiB / 512MiB
+1794467290158,streamflow-bench-postgres-1,0.03%,92.58MiB / 768MiB
+1794467290158,streamflow-bench-kafka-1,4.43%,562MiB / 1GiB
+1794467293532,streamflow-bench-worker-1,3.27%,280MiB / 512MiB
+1794467293532,streamflow-bench-postgres-1,28.08%,91.43MiB / 768MiB
+1794467293532,streamflow-bench-kafka-1,5.22%,562.3MiB / 1GiB

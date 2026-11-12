@@ -67,6 +67,20 @@ Design rationale: [ADR-0011](adr/0011-dashboard-data-path.md).
 | 30 | Latency percentiles are the upper bound of the histogram bucket that contains them; the SQL bucketing matches `LatencyBuckets` | `LatencyBucketsTest`, `LatencyHistogramIT` |
 | 31 | The dashboard shows only values from the API: unmeasured values render as a dash, and the operator key is held in memory only and sent only in the request header | Frontend tests (`OverviewPage`, `OperatorKey`, `DeadLettersPage`, `SimulationsPage`), Playwright `e2e/` |
 
+## Batch processing mode (Phase 5)
+
+Batch mode (ADR-0013) is the default since Phase 5; record mode is kept as the reference. Every Phase 2 and Phase 3
+claim above holds in both modes: the reliability suite runs twice in CI, once per mode.
+
+| # | Claim | Verified by |
+|---|---|---|
+| 32 | A poll batch is applied in one transaction; events already in the ledger, or repeated within the batch, only count as duplicates | `BatchProcessingIT` |
+| 33 | When any record of a batch fails, the batch transaction is rolled back and the records are processed one by one; offsets are committed only for the records before the first failing one, which have committed | `BatchProcessingIT` |
+| 34 | A crash after the fallback has committed some records, before any offset commit, loses nothing and applies nothing twice; the failing record is dead-lettered once | `BatchProcessingIT` |
+| 35 | Concurrent batches with overlapping events apply each event exactly once, without deadlock failures | `BatchProcessingIT` |
+| 36 | Retry limits, dead-letter provenance and outage behaviour are the same as in record mode | `RetryIT`, `DeadLetterIT`, `DatabaseOutageIT` (both modes) |
+| 37 | Every benchmark run reconciled exactly (97 runs, including worker kills) | `docs/benchmarks/results.md`, `benchmarks/results/` |
+
 ## Boundaries of the claims
 
 - **Retry counts are per partition assignment.** Spring Kafka keeps attempt counts in memory. A worker restart or

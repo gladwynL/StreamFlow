@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 350" font-family="system-ui, sans-serif" font-size="12" role="img" aria-label="Backlog drain throughput by workers × threads (events/s)">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="12" y="22" font-size="14" font-weight="600" fill="#111">Backlog drain throughput by workers × threads (events/s)</text>
+<text x="252" y="54" text-anchor="end" fill="#333">record 1 × 1</text>
+<rect x="260" y="43" width="8.2" height="16" rx="3" fill="#2a78d6"/>
+<line x1="267.4" x2="268.5" y1="51" y2="51" stroke="#111" stroke-width="1.5"/>
+<text x="274.2" y="55" fill="#111">348 /s</text>
+<text x="252" y="84" text-anchor="end" fill="#333">batch 1 × 1</text>
+<rect x="260" y="73" width="169.9" height="16" rx="3" fill="#2a78d6"/>
+<line x1="414.3" x2="448.2" y1="81" y2="81" stroke="#111" stroke-width="1.5"/>
+<text x="435.9" y="85" fill="#111">7,235 /s</text>
+<text x="252" y="114" text-anchor="end" fill="#333">record 2 × 1</text>
+<rect x="260" y="103" width="14.6" height="16" rx="3" fill="#2a78d6"/>
+<line x1="274.6" x2="274.7" y1="111" y2="111" stroke="#111" stroke-width="1.5"/>
+<text x="280.6" y="115" fill="#111">622 /s</text>
+<text x="252" y="144" text-anchor="end" fill="#333">batch 2 × 1</text>
+<rect x="260" y="133" width="276.7" height="16" rx="3" fill="#2a78d6"/>
+<line x1="400.8" x2="558.1" y1="141" y2="141" stroke="#111" stroke-width="1.5"/>
+<text x="542.7" y="145" fill="#111">11,781 /s</text>
+<text x="252" y="174" text-anchor="end" fill="#333">record 3 × 1</text>
+<rect x="260" y="163" width="16.7" height="16" rx="3" fill="#2a78d6"/>
+<line x1="275.6" x2="278.1" y1="171" y2="171" stroke="#111" stroke-width="1.5"/>
+<text x="282.7" y="175" fill="#111">709 /s</text>
+<text x="252" y="204" text-anchor="end" fill="#333">batch 3 × 1</text>
+<rect x="260" y="193" width="278.8" height="16" rx="3" fill="#2a78d6"/>
+<line x1="498.4" x2="609.2" y1="201" y2="201" stroke="#111" stroke-width="1.5"/>
+<text x="544.8" y="205" fill="#111">11,872 /s</text>
+<text x="252" y="234" text-anchor="end" fill="#333">record 6 × 1</text>
+<rect x="260" y="223" width="23.1" height="16" rx="3" fill="#2a78d6"/>
+<line x1="281.2" x2="283.1" y1="231" y2="231" stroke="#111" stroke-width="1.5"/>
+<text x="289.1" y="235" fill="#111">982 /s</text>
+<text x="252" y="264" text-anchor="end" fill="#333">batch 6 × 1</text>
+<rect x="260" y="253" width="298.5" height="16" rx="3" fill="#2a78d6"/>
+<line x1="541.3" x2="618.0" y1="261" y2="261" stroke="#111" stroke-width="1.5"/>
+<text x="564.5" y="265" fill="#111">12,712 /s</text>
+<text x="252" y="294" text-anchor="end" fill="#333">record 1 × 6</text>
+<rect x="260" y="283" width="22.2" height="16" rx="3" fill="#2a78d6"/>
+<line x1="281.9" x2="282.6" y1="291" y2="291" stroke="#111" stroke-width="1.5"/>
+<text x="288.2" y="295" fill="#111">946 /s</text>
+<text x="252" y="324" text-anchor="end" fill="#333">batch 1 × 6</text>
+<rect x="260" y="313" width="364.2" height="16" rx="3" fill="#2a78d6"/>
+<line x1="578.6" x2="670.0" y1="321" y2="321" stroke="#111" stroke-width="1.5"/>
+<text x="630.2" y="325" fill="#111">15,507 /s</text>
+</svg>

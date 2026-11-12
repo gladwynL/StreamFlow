@@ -1,0 +1,1446 @@
+{
+  "phase" : "OBSERVE",
+  "scenario" : "adhoc",
+  "environment" : {
+    "javaVersion" : "21.0.13+9-LTS",
+    "jvm" : "OpenJDK 64-Bit Server VM 21.0.13+9-LTS",
+    "jvmArguments" : [ "-XX:MaxRAMPercentage=70", "-XX:+ExitOnOutOfMemoryError" ],
+    "availableProcessors" : 12,
+    "maxHeapBytes" : 545390592,
+    "os" : "Linux 6.18.33.2-microsoft-standard-WSL2",
+    "eventsTopic" : "bench.scale-record-1w-c1-20261112t060510z-r3.events",
+    "partitions" : 6,
+    "consumerGroup" : "bench-scale-record-1w-c1-20261112t060510z-r3",
+    "postgres" : {
+      "commit_delay" : "0",
+      "fsync" : "on",
+      "full_page_writes" : "on",
+      "max_connections" : "80",
+      "max_wal_size" : "1024",
+      "server_version" : "18.6",
+      "shared_buffers" : "32768",
+      "synchronous_commit" : "on",
+      "track_io_timing" : "on",
+      "track_wal_io_timing" : "on",
+      "wal_level" : "replica",
+      "wal_sync_method" : "fdatasync"
+    },
+    "benchVariables" : {
+      "BENCH_CONCURRENCY" : "1",
+      "BENCH_PARTITIONS" : "6",
+      "BENCH_PROCESSING_MODE" : "RECORD",
+      "BENCH_SCENARIO" : "scale-record-1w-c1",
+      "BENCH_WORKERS" : "1"
+    }
+  },
+  "runId" : "9a25f7ee-e962-4988-ba6a-9d70fdb71a9f",
+  "observeStartedEpochMs" : 1794464040627,
+  "drained" : true,
+  "observedSeconds" : 179.238237253,
+  "timeline" : [ {
+    "t" : 0,
+    "processed" : 2240,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 58000
+  }, {
+    "t" : 1368,
+    "processed" : 2584,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 57500
+  }, {
+    "t" : 2610,
+    "processed" : 2945,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 7375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 57500
+  }, {
+    "t" : 3848,
+    "processed" : 3319,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 6875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 57000
+  }, {
+    "t" : 5074,
+    "processed" : 3696,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 6375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 56500
+  }, {
+    "t" : 6286,
+    "processed" : 4034,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 56000
+  }, {
+    "t" : 7492,
+    "processed" : 4377,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 56000
+  }, {
+    "t" : 8740,
+    "processed" : 4762,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 5375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 55500
+  }, {
+    "t" : 9953,
+    "processed" : 5043,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 55000
+  }, {
+    "t" : 11186,
+    "processed" : 5430,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 55000
+  }, {
+    "t" : 12405,
+    "processed" : 5832,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 4375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 54500
+  }, {
+    "t" : 13603,
+    "processed" : 6233,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 3875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 54000
+  }, {
+    "t" : 14827,
+    "processed" : 6709,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 3375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 53500
+  }, {
+    "t" : 16042,
+    "processed" : 7138,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 2875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 53000
+  }, {
+    "t" : 17250,
+    "processed" : 7547,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 2375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 52500
+  }, {
+    "t" : 18513,
+    "processed" : 7978,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 1875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 52000
+  }, {
+    "t" : 19714,
+    "processed" : 8348,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 1875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 52000
+  }, {
+    "t" : 20933,
+    "processed" : 8745,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 1375, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 51500
+  }, {
+    "t" : 22189,
+    "processed" : 9138,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 875, 9611, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 51000
+  }, {
+    "t" : 23437,
+    "processed" : 9479,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 9539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 50500
+  }, {
+    "t" : 24682,
+    "processed" : 9802,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 9539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 50500
+  }, {
+    "t" : 25898,
+    "processed" : 10177,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 9039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 50000
+  }, {
+    "t" : 27149,
+    "processed" : 10575,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 8539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 49500
+  }, {
+    "t" : 28392,
+    "processed" : 10946,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 8539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 49500
+  }, {
+    "t" : 29633,
+    "processed" : 11318,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 8039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 49000
+  }, {
+    "t" : 30827,
+    "processed" : 11725,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 7539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 48500
+  }, {
+    "t" : 32026,
+    "processed" : 12134,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 7039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 48000
+  }, {
+    "t" : 33248,
+    "processed" : 12600,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 6539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 47500
+  }, {
+    "t" : 34468,
+    "processed" : 13053,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 6039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 47000
+  }, {
+    "t" : 35721,
+    "processed" : 13486,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 5539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 46500
+  }, {
+    "t" : 36941,
+    "processed" : 13938,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 5539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 46500
+  }, {
+    "t" : 38187,
+    "processed" : 14402,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 5039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 46000
+  }, {
+    "t" : 39424,
+    "processed" : 14751,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 4539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 45500
+  }, {
+    "t" : 40659,
+    "processed" : 15165,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 4039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 45000
+  }, {
+    "t" : 41874,
+    "processed" : 15494,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 3539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 44500
+  }, {
+    "t" : 43094,
+    "processed" : 15894,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 3539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 44500
+  }, {
+    "t" : 44340,
+    "processed" : 16322,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 3039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 44000
+  }, {
+    "t" : 45567,
+    "processed" : 16804,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 2539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 43500
+  }, {
+    "t" : 46773,
+    "processed" : 17231,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 2039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 43000
+  }, {
+    "t" : 48006,
+    "processed" : 17656,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 1539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 42500
+  }, {
+    "t" : 49227,
+    "processed" : 18104,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 1039, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 42000
+  }, {
+    "t" : 50480,
+    "processed" : 18535,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 41500
+  }, {
+    "t" : 51677,
+    "processed" : 18855,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 539, 9985, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 41500
+  }, {
+    "t" : 52934,
+    "processed" : 19346,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 9766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 41000
+  }, {
+    "t" : 54141,
+    "processed" : 19783,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 9266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 40500
+  }, {
+    "t" : 55366,
+    "processed" : 20215,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 8766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 40000
+  }, {
+    "t" : 56592,
+    "processed" : 20617,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 8266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 39500
+  }, {
+    "t" : 57794,
+    "processed" : 21030,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 7766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 39000
+  }, {
+    "t" : 59029,
+    "processed" : 21457,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 7266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 38500
+  }, {
+    "t" : 60258,
+    "processed" : 21839,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 7266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 38500
+  }, {
+    "t" : 61495,
+    "processed" : 22242,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 6766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 38000
+  }, {
+    "t" : 62776,
+    "processed" : 22537,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 6266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 37500
+  }, {
+    "t" : 63990,
+    "processed" : 22831,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 6266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 37500
+  }, {
+    "t" : 65227,
+    "processed" : 23121,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 5766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 37000
+  }, {
+    "t" : 66481,
+    "processed" : 23503,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 5266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 36500
+  }, {
+    "t" : 67688,
+    "processed" : 23949,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 5266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 36500
+  }, {
+    "t" : 68946,
+    "processed" : 24391,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 4766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 36000
+  }, {
+    "t" : 70206,
+    "processed" : 24776,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 4266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 35500
+  }, {
+    "t" : 71457,
+    "processed" : 25148,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 3766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 35000
+  }, {
+    "t" : 72676,
+    "processed" : 25540,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 3266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 34500
+  }, {
+    "t" : 73896,
+    "processed" : 25981,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 2766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 34000
+  }, {
+    "t" : 75155,
+    "processed" : 26462,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 2266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 33500
+  }, {
+    "t" : 76386,
+    "processed" : 26988,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 1766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 33000
+  }, {
+    "t" : 77600,
+    "processed" : 27493,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 1266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 32500
+  }, {
+    "t" : 78849,
+    "processed" : 27944,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 1266, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 32500
+  }, {
+    "t" : 80106,
+    "processed" : 28458,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 766, 10113, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 32000
+  }, {
+    "t" : 81331,
+    "processed" : 28940,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 9802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 31500
+  }, {
+    "t" : 82559,
+    "processed" : 29349,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 9302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 31000
+  }, {
+    "t" : 83789,
+    "processed" : 29828,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 8802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 30500
+  }, {
+    "t" : 85004,
+    "processed" : 30284,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 8302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 30000
+  }, {
+    "t" : 86236,
+    "processed" : 30683,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 7802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 29500
+  }, {
+    "t" : 87441,
+    "processed" : 31152,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 7302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 29000
+  }, {
+    "t" : 88661,
+    "processed" : 31615,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 6802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 28500
+  }, {
+    "t" : 89885,
+    "processed" : 32033,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 6302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 28000
+  }, {
+    "t" : 91119,
+    "processed" : 32500,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 5802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 27500
+  }, {
+    "t" : 92338,
+    "processed" : 32949,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 5802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 27500
+  }, {
+    "t" : 93561,
+    "processed" : 33375,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 5302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 27000
+  }, {
+    "t" : 94788,
+    "processed" : 33816,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 4802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 26500
+  }, {
+    "t" : 95977,
+    "processed" : 34258,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 4302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 26000
+  }, {
+    "t" : 97226,
+    "processed" : 34677,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 3802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 25500
+  }, {
+    "t" : 98441,
+    "processed" : 35100,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 3302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 25000
+  }, {
+    "t" : 99693,
+    "processed" : 35477,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 2802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 24500
+  }, {
+    "t" : 100904,
+    "processed" : 35925,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 2802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 24500
+  }, {
+    "t" : 102131,
+    "processed" : 36360,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 2302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 24000
+  }, {
+    "t" : 103383,
+    "processed" : 36746,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 1802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 23500
+  }, {
+    "t" : 104620,
+    "processed" : 37197,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 1302, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 23000
+  }, {
+    "t" : 105839,
+    "processed" : 37655,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 802, 9850, 10566 ],
+    "members" : 1,
+    "lag" : 22500
+  }, {
+    "t" : 107063,
+    "processed" : 38136,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 9486, 10566 ],
+    "members" : 1,
+    "lag" : 22000
+  }, {
+    "t" : 108324,
+    "processed" : 38571,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 8986, 10566 ],
+    "members" : 1,
+    "lag" : 21500
+  }, {
+    "t" : 109552,
+    "processed" : 39004,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 8486, 10566 ],
+    "members" : 1,
+    "lag" : 21000
+  }, {
+    "t" : 110782,
+    "processed" : 39404,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 8486, 10566 ],
+    "members" : 1,
+    "lag" : 21000
+  }, {
+    "t" : 112025,
+    "processed" : 39800,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 7986, 10566 ],
+    "members" : 1,
+    "lag" : 20500
+  }, {
+    "t" : 113257,
+    "processed" : 40265,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 7486, 10566 ],
+    "members" : 1,
+    "lag" : 20000
+  }, {
+    "t" : 114458,
+    "processed" : 40692,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 6986, 10566 ],
+    "members" : 1,
+    "lag" : 19500
+  }, {
+    "t" : 115656,
+    "processed" : 41155,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 6486, 10566 ],
+    "members" : 1,
+    "lag" : 19000
+  }, {
+    "t" : 116902,
+    "processed" : 41616,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 5986, 10566 ],
+    "members" : 1,
+    "lag" : 18500
+  }, {
+    "t" : 118149,
+    "processed" : 42028,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 5486, 10566 ],
+    "members" : 1,
+    "lag" : 18000
+  }, {
+    "t" : 119385,
+    "processed" : 42475,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 5486, 10566 ],
+    "members" : 1,
+    "lag" : 18000
+  }, {
+    "t" : 120658,
+    "processed" : 42947,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 4986, 10566 ],
+    "members" : 1,
+    "lag" : 17500
+  }, {
+    "t" : 121887,
+    "processed" : 43401,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 4486, 10566 ],
+    "members" : 1,
+    "lag" : 17000
+  }, {
+    "t" : 123097,
+    "processed" : 43895,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 3986, 10566 ],
+    "members" : 1,
+    "lag" : 16500
+  }, {
+    "t" : 124337,
+    "processed" : 44331,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 3486, 10566 ],
+    "members" : 1,
+    "lag" : 16000
+  }, {
+    "t" : 125578,
+    "processed" : 44635,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 2986, 10566 ],
+    "members" : 1,
+    "lag" : 15500
+  }, {
+    "t" : 126812,
+    "processed" : 44927,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 2986, 10566 ],
+    "members" : 1,
+    "lag" : 15500
+  }, {
+    "t" : 128076,
+    "processed" : 45203,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 2486, 10566 ],
+    "members" : 1,
+    "lag" : 15000
+  }, {
+    "t" : 129432,
+    "processed" : 45321,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 2486, 10566 ],
+    "members" : 1,
+    "lag" : 15000
+  }, {
+    "t" : 130857,
+    "processed" : 45532,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 1986, 10566 ],
+    "members" : 1,
+    "lag" : 14500
+  }, {
+    "t" : 132081,
+    "processed" : 45852,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 1986, 10566 ],
+    "members" : 1,
+    "lag" : 14500
+  }, {
+    "t" : 133298,
+    "processed" : 46107,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 1486, 10566 ],
+    "members" : 1,
+    "lag" : 14000
+  }, {
+    "t" : 134510,
+    "processed" : 46522,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 986, 10566 ],
+    "members" : 1,
+    "lag" : 13500
+  }, {
+    "t" : 135749,
+    "processed" : 47021,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 486, 10566 ],
+    "members" : 1,
+    "lag" : 13000
+  }, {
+    "t" : 136975,
+    "processed" : 47459,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 486, 10566 ],
+    "members" : 1,
+    "lag" : 13000
+  }, {
+    "t" : 138252,
+    "processed" : 47864,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 10106 ],
+    "members" : 1,
+    "lag" : 12500
+  }, {
+    "t" : 139491,
+    "processed" : 48235,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 9606 ],
+    "members" : 1,
+    "lag" : 12000
+  }, {
+    "t" : 140726,
+    "processed" : 48625,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 9106 ],
+    "members" : 1,
+    "lag" : 11500
+  }, {
+    "t" : 141976,
+    "processed" : 49014,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 8606 ],
+    "members" : 1,
+    "lag" : 11000
+  }, {
+    "t" : 143206,
+    "processed" : 49410,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 8606 ],
+    "members" : 1,
+    "lag" : 11000
+  }, {
+    "t" : 144416,
+    "processed" : 49854,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 8106 ],
+    "members" : 1,
+    "lag" : 10500
+  }, {
+    "t" : 145639,
+    "processed" : 50338,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 7606 ],
+    "members" : 1,
+    "lag" : 10000
+  }, {
+    "t" : 146876,
+    "processed" : 50792,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 7106 ],
+    "members" : 1,
+    "lag" : 9500
+  }, {
+    "t" : 148094,
+    "processed" : 51243,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 6606 ],
+    "members" : 1,
+    "lag" : 9000
+  }, {
+    "t" : 149314,
+    "processed" : 51672,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 6106 ],
+    "members" : 1,
+    "lag" : 8500
+  }, {
+    "t" : 150617,
+    "processed" : 52022,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 5606 ],
+    "members" : 1,
+    "lag" : 8000
+  }, {
+    "t" : 151841,
+    "processed" : 52481,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 5106 ],
+    "members" : 1,
+    "lag" : 7500
+  }, {
+    "t" : 153082,
+    "processed" : 52895,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 5106 ],
+    "members" : 1,
+    "lag" : 7500
+  }, {
+    "t" : 154330,
+    "processed" : 53270,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 4606 ],
+    "members" : 1,
+    "lag" : 7000
+  }, {
+    "t" : 155576,
+    "processed" : 53731,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 4106 ],
+    "members" : 1,
+    "lag" : 6500
+  }, {
+    "t" : 156803,
+    "processed" : 54212,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 3606 ],
+    "members" : 1,
+    "lag" : 6000
+  }, {
+    "t" : 158066,
+    "processed" : 54649,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 3106 ],
+    "members" : 1,
+    "lag" : 5500
+  }, {
+    "t" : 159299,
+    "processed" : 55000,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 2606 ],
+    "members" : 1,
+    "lag" : 5000
+  }, {
+    "t" : 161632,
+    "processed" : 55391,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 2606 ],
+    "members" : 1,
+    "lag" : 5000
+  }, {
+    "t" : 162906,
+    "processed" : 55862,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 2106 ],
+    "members" : 1,
+    "lag" : 4500
+  }, {
+    "t" : 164154,
+    "processed" : 56305,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 1606 ],
+    "members" : 1,
+    "lag" : 4000
+  }, {
+    "t" : 165413,
+    "processed" : 56720,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 3562
+  }, {
+    "t" : 166653,
+    "processed" : 56829,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 3562
+  }, {
+    "t" : 167895,
+    "processed" : 56829,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 3562
+  }, {
+    "t" : 169145,
+    "processed" : 56829,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 3562
+  }, {
+    "t" : 170366,
+    "processed" : 56829,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 447, 258, 577, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 3562
+  }, {
+    "t" : 171615,
+    "processed" : 57283,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 205, 577, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 3062
+  }, {
+    "t" : 172853,
+    "processed" : 57692,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 282, 666, 446, 1168 ],
+    "members" : 1,
+    "lag" : 2562
+  }, {
+    "t" : 174091,
+    "processed" : 58205,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 448, 446, 1168 ],
+    "members" : 1,
+    "lag" : 2062
+  }, {
+    "t" : 175318,
+    "processed" : 58673,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 394, 1168 ],
+    "members" : 1,
+    "lag" : 1562
+  }, {
+    "t" : 176521,
+    "processed" : 59182,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 0, 1062 ],
+    "members" : 1,
+    "lag" : 1062
+  }, {
+    "t" : 177752,
+    "processed" : 59632,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 0, 562 ],
+    "members" : 1,
+    "lag" : 562
+  }, {
+    "t" : 178992,
+    "processed" : 60000,
+    "duplicates" : 0,
+    "deadLetters" : 0,
+    "lagByPartition" : [ 0, 0, 0, 0, 0, 0 ],
+    "members" : 1,
+    "lag" : 0
+  } ],
+  "acked" : 60000,
+  "reconciliation" : {
+    "result" : "PASS",
+    "reasons" : [ ],
+    "drained" : true,
+    "attempted" : 60000,
+    "acked" : 60000,
+    "processed" : 60000,
+    "duplicatesSuppressed" : 0,
+    "deadLetterUnresolved" : 0
+  },
+  "consumer" : {
+    "events" : 60000,
+    "firstProcessedAt" : "2026-11-12T06:13:48.520842Z",
+    "lastProcessedAt" : "2026-11-12T06:16:59.491310Z",
+    "spanSeconds" : 190.970468,
+    "eventsPerSecond" : 314.17946779079995
+  },
+  "latency" : {
+    "samples" : 60000,
+    "p50Millis" : 109092.4765,
+    "p95Millis" : 193666.5132,
+    "p99Millis" : 199801.76465000003,
+    "maxMillis" : 201573.310000
+  },
+  "partitions" : [ {
+    "partition" : 0,
+    "events" : 9875,
+    "spanSeconds" : 182.903008
+  }, {
+    "partition" : 1,
+    "events" : 9611,
+    "spanSeconds" : 149.462572
+  }, {
+    "partition" : 2,
+    "events" : 9985,
+    "spanSeconds" : 121.451777
+  }, {
+    "partition" : 3,
+    "events" : 10113,
+    "spanSeconds" : 94.990515
+  }, {
+    "partition" : 4,
+    "events" : 9850,
+    "spanSeconds" : 70.11184
+  }, {
+    "partition" : 5,
+    "events" : 10566,
+    "spanSeconds" : 43.180344
+  } ],
+  "topStatements" : [ {
+    "query" : "WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset, run_id, run_seq, user_id, session_id, synthetic, amount_cents, currency, payload) VALUES ($1, $2, $3, $4",
+    "calls" : 58553,
+    "total_ms" : 20929.3,
+    "mean_ms" : 0.3574,
+    "rows" : 58553,
+    "shared_blks_hit" : 1282143,
+    "shared_blks_read" : 7,
+    "wal_records" : 647798,
+    "wal_bytes" : 58093422
+  }, {
+    "query" : "INSERT INTO processed_events (event_id, run_id, run_seq, kafka_partition, kafka_offset) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (event_id) DO NOTHING",
+    "calls" : 60000,
+    "total_ms" : 8792.4,
+    "mean_ms" : 0.1465,
+    "rows" : 60000,
+    "shared_blks_hit" : 636214,
+    "shared_blks_read" : 2,
+    "wal_records" : 251935,
+    "wal_bytes" : 22183182
+  }, {
+    "query" : "WITH event_row AS ( INSERT INTO events (event_id, event_type, occurred_at, kafka_ts, kafka_partition, kafka_offset, run_id, run_seq, user_id, session_id, synthetic, amount_cents, currency, payload) VALUES ($1, $2, $3, $4",
+    "calls" : 1447,
+    "total_ms" : 452.7,
+    "mean_ms" : 0.3128,
+    "rows" : 1447,
+    "shared_blks_hit" : 31892,
+    "shared_blks_read" : 0,
+    "wal_records" : 16039,
+    "wal_bytes" : 1561016
+  }, {
+    "query" : "SELECT count(*) FROM ( SELECT run_seq FROM ( SELECT run_seq, event_id FROM processed_events WHERE run_id = $1 UNION SELECT run_seq, event_id FROM dead_letter_events WHERE run_id = $2 AND run_seq IS NOT NULL AND event_id ",
+    "calls" : 1,
+    "total_ms" : 185.8,
+    "mean_ms" : 185.7604,
+    "rows" : 1,
+    "shared_blks_hit" : 684,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "WITH sink AS ( SELECT run_seq FROM processed_events WHERE run_id = $1 UNION SELECT run_seq FROM dead_letter_events WHERE run_id = $2 AND run_seq IS NOT NULL ) SELECT count(*) FROM sink s WHERE s.run_seq < $5 OR s.run_seq",
+    "calls" : 1,
+    "total_ms" : 134.3,
+    "mean_ms" : 134.2731,
+    "rows" : 1,
+    "shared_blks_hit" : 4629,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.run_id = $2 AND p.run_seq = s) AND NOT EXISTS (SELECT $7 FROM publish_failures f WHERE f.run_id = $3 AND f.seq",
+    "calls" : 1,
+    "total_ms" : 81.5,
+    "mean_ms" : 81.4695,
+    "rows" : 1,
+    "shared_blks_hit" : 682,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "BEGIN",
+    "calls" : 60013,
+    "total_ms" : 56.4,
+    "mean_ms" : 0.0009,
+    "rows" : 0,
+    "shared_blks_hit" : 0,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) AS events, min(ingested_at) AS first_at, max(ingested_at) AS last_at, extract($2 FROM max(ingested_at) - min(ingested_at)) AS span_seconds FROM events WHERE run_id = $1",
+    "calls" : 1,
+    "total_ms" : 48.2,
+    "mean_ms" : 48.2367,
+    "rows" : 1,
+    "shared_blks_hit" : 1641,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "WITH l AS (SELECT extract($2 FROM ingested_at - kafka_ts) * $3 AS ms FROM events WHERE run_id = $1) SELECT count(*) AS n, percentile_cont($4) WITHIN GROUP (ORDER BY ms) AS p50, percentile_cont($5) WITHIN GROUP (ORDER BY ",
+    "calls" : 1,
+    "total_ms" : 42.6,
+    "mean_ms" : 42.5853,
+    "rows" : 1,
+    "shared_blks_hit" : 1649,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "INSERT INTO worker_heartbeats (worker_id, host, started_at, last_seen_at, processed, duplicates, failures_bad_record, failures_transient, failures_infra, dead_lettered, dead_letter_failures, rebalances, consumer_errors, ",
+    "calls" : 95,
+    "total_ms" : 38.4,
+    "mean_ms" : 0.4038,
+    "rows" : 95,
+    "shared_blks_hit" : 702,
+    "shared_blks_read" : 0,
+    "wal_records" : 383,
+    "wal_bytes" : 26180
+  }, {
+    "query" : "SELECT s FROM generate_series($5, $1) AS s WHERE NOT EXISTS (SELECT $6 FROM processed_events p WHERE p.run_id = $2 AND p.run_seq = s) AND NOT EXISTS (SELECT $7 FROM publish_failures f WHERE f.run_id = $3 AND f.sequence =",
+    "calls" : 1,
+    "total_ms" : 31.6,
+    "mean_ms" : 31.6106,
+    "rows" : 0,
+    "shared_blks_hit" : 682,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) FROM events WHERE run_id = $1",
+    "calls" : 1,
+    "total_ms" : 30.5,
+    "mean_ms" : 30.5394,
+    "rows" : 1,
+    "shared_blks_hit" : 465,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "SELECT count(*) FROM processed_events WHERE run_id = $1",
+    "calls" : 1,
+    "total_ms" : 28.6,
+    "mean_ms" : 28.5522,
+    "rows" : 1,
+    "shared_blks_hit" : 682,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  }, {
+    "query" : "INSERT INTO run_reconciliations (run_id, result, details) VALUES ($1, $2, CAST($3 AS jsonb))",
+    "calls" : 1,
+    "total_ms" : 14.9,
+    "mean_ms" : 14.9332,
+    "rows" : 1,
+    "shared_blks_hit" : 58,
+    "shared_blks_read" : 2,
+    "wal_records" : 7,
+    "wal_bytes" : 1270
+  }, {
+    "query" : "SELECT kafka_partition, count(*) AS events, extract($2 FROM max(ingested_at) - min(ingested_at)) AS span_seconds FROM events WHERE run_id = $1 GROUP BY kafka_partition ORDER BY kafka_partition",
+    "calls" : 1,
+    "total_ms" : 13.8,
+    "mean_ms" : 13.7991,
+    "rows" : 6,
+    "shared_blks_hit" : 1641,
+    "shared_blks_read" : 0,
+    "wal_records" : 0,
+    "wal_bytes" : 0
+  } ],
+  "database" : {
+    "xact_commit" : 60777,
+    "xact_rollback" : 0,
+    "tup_inserted" : 119947,
+    "tup_updated" : 179856,
+    "blks_read" : 55,
+    "blks_hit" : 1977107,
+    "deadlocks" : 0,
+    "temp_bytes" : 0,
+    "active_time" : 116427.24,
+    "session_time" : 598285.303
+  },
+  "walIo" : [ {
+    "backend_type" : "client backend",
+    "object" : "wal",
+    "context" : "normal",
+    "writes" : 60022,
+    "write_bytes" : 576626688,
+    "write_time" : 5089.377,
+    "fsyncs" : 60017,
+    "fsync_time" : 67611.518
+  }, {
+    "backend_type" : "autovacuum worker",
+    "object" : "wal",
+    "context" : "normal",
+    "writes" : 16,
+    "write_bytes" : 262144,
+    "write_time" : 5.97,
+    "fsyncs" : 16,
+    "fsync_time" : 23.752
+  }, {
+    "backend_type" : "walwriter",
+    "object" : "wal",
+    "context" : "normal",
+    "writes" : 39,
+    "write_bytes" : 327680,
+    "write_time" : 2.697,
+    "fsyncs" : 39,
+    "fsync_time" : 49.562
+  } ],
+  "tableSizes" : {
+    "ledger_bytes" : 11190272,
+    "events_bytes" : 24076288
+  }
+}

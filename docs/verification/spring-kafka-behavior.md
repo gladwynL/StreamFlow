@@ -57,6 +57,7 @@ Observed on 2026-11-11 with Spring for Apache Kafka 4.1.2, kafka-clients 4.2.2, 
 | 4 | Is the recovered record's offset committed only after the dead-letter acknowledgement? | `DeadLetterPublishFailureIT`, `CrashRecoveryIT` | **Yes.** No commit while publication failed (3). Halting the JVM right after the acknowledgement left the dead letter in the topic with the source offset still uncommitted; after restart the record was dead-lettered again (2 dead-letter records) and stored once in PostgreSQL. |
 | 5 | Is the per-exception back-off applied, and does a long unlimited back-off avoid exceeding `max.poll.interval.ms`? | `RetryIT`, `DatabaseOutageIT` | **Yes.** Transient: exactly 2 failed attempts per record that succeeds on attempt 3, 3 per exhausted record. Infrastructure: PostgreSQL frozen mid-run — 6 infrastructure failures, 0 dead letters, **0 rebalances** during the outage, automatic recovery, 20,000 events each applied once (reconciliation PASS). Duplicate deliveries were 0 in some runs and 2 in another — consistent with commits that reached PostgreSQL while their acknowledgement was lost to the socket timeout; the retries were suppressed by the ledger. |
 | 6 | Is the database commit complete before the offset commit? | `CrashRecoveryIT` | **Yes.** Halted right after the commit of a record: in the ledger, committed offset still 0; ~1,000 redeliveries suppressed; PASS with each of 3,000 events applied once. Halted before the commit: not in the ledger, processed once after restart, PASS. |
+| 7 | Batch mode: does `BatchListenerFailedException(index)` commit only offsets whose effects are committed? | `BatchProcessingIT`, reliability suite in both modes | **Yes.** With an undecodable record at position 7 of a 30-record batch, the fallback committed records 0–6 one by one; halting the JVM right after the seventh commit left the committed offset at 0 (nothing committed before the listener returned). A restarted worker suppressed the 7 redelivered records as duplicates, dead-lettered the bad record once (offset 7, `BAD_RECORD`) and committed the partition to its end (spring-kafka 4.1.2). |
 | 8 | Does a graceful shutdown commit offsets of processed records? | `WorkerRestartIT` | **Yes.** 0 duplicate deliveries. |
 | 9 | Are offsets committed when partitions are revoked during a rebalance? | `WorkerRestartIT` | **Yes.** 30,000 events, 0 duplicate deliveries, PASS. |
 | 10 | What happens with `auto.offset.reset=none` when the committed position was deleted by retention? | `OffsetOutOfRangeIT` | **Reported, not skipped.** After `deleteRecords` moved the log start past the committed offset, the client logged that the fetch position "is out of range … raising error to the application since no reset policy is configured"; the container passed it to the error handler (counted as `streamflow.consumer.errors`), the committed offset stayed 0 and none of the surviving records were consumed by skipping ahead. |
@@ -88,3 +89,16 @@ Item 7 (batch listener) belongs to Phase 5.
   which PostgreSQL rejects; ingestion retried indefinitely and stalled until fixed. Non-printable header values are
   now stored as `base64:…` (`DeadLetterIngestionTest`), and ingestion failures are logged and counted
   (`streamflow.deadletters.ingestion.failures`) so such a stall is visible.
+
+### Findings (Phase 5, batch mode)
+
+- **The batch container clears the error handler's failure state after a successful batch.** spring-kafka 4.1.2's
+  `ListenerConsumer.doInvokeBatchListener` calls `CommonErrorHandler.clearThreadState()` when a batch succeeds after
+  a failed one; record listeners never do before the consumer thread ends. The successful batch may contain only
+  other partitions' records, so a record still being retried restarted its attempt count: `RetryIT` in batch mode
+  saw a record fail attempts 1, 2, 1, 2 (264 failed attempts instead of 262). The event error handler now keeps its
+  state (`clearThreadState()` is a no-op), giving batch mode record mode's semantics: one entry per partition,
+  replaced when another record of the partition fails, removed when the record is recovered. `RetryIT` passes in
+  both modes.
+- **The recoverer receives the `BatchListenerFailedException`, not its cause.** Dead letters recorded the wrapper as
+  their exception class (`DeadLetterIT` in batch mode); the recoverer now unwraps it.

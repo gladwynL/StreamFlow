@@ -20,7 +20,7 @@ CHARTS = OUTPUT.parent / "charts"
 
 
 def load(path):
-    return json.loads(path.read_text()) if path.exists() else None
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
 def epoch_ms(iso):
@@ -42,7 +42,7 @@ def resources(run_dir, start_ms, end_ms):
     if not path.exists() or start_ms is None:
         return {}
     per = {}
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         for row in csv.DictReader(f):
             try:
                 t = int(row["epoch_ms"])
@@ -126,6 +126,7 @@ def run_metrics(run_dir):
         "skew": (max(counts) / (sum(counts) / len(counts))) if counts else None,
         "resources": resources(run_dir, start, end),
         "recoverySeconds": recovery(observe, run_dir),
+        "maxLatency": observe["latency"]["maxMillis"],
         "peakLag": max(((s.get("lag") or 0) for s in observe.get("timeline") or []), default=None),
     }
 
@@ -170,7 +171,7 @@ def svg_bars(path, title, groups, unit):
             )
         parts.append(f'<text x="{left + w + 6:.1f}" y="{y + 15}" fill="#111">{median:,.0f} {unit}</text>')
     parts.append("</svg>")
-    path.write_text("\n".join(parts))
+    path.write_text("\n".join(parts), encoding="utf-8")
 
 # ---- appended sections (inserted before the "Runs" table by main) ----
 
@@ -233,12 +234,12 @@ def extra_sections(summary):
     if live:
         out += ["", "## Latency under steady load (live workload, 60 s)", "",
                 "Kafka append to start of the processing transaction, exact percentiles over every event of the run.",
-                "", "| Scenario | Offered/s | Processed/s | p50 ms | p95 ms | p99 ms | Peak lag |",
+                "", "| Scenario | Offered/s | Processed/s | p50 ms | p95 ms | p99 ms | Max ms |",
                 "|---|---|---|---|---|---|---|"]
         for k in live:
             c, s, ok = summary[k]
             out.append(f"| `{k}` | {c['RATE']} | {fmt(s['consumerPerSecond'])} | {fmt(s['p50'], 1)} | {fmt(s['p95'], 1)} |"
-                       f" {fmt(s['p99'], 1)} | {fmt(stats([r['peakLag'] for r in ok]))} |")
+                       f" {fmt(s['p99'], 1)} | {fmt(stats([r['maxLatency'] for r in ok]))} |")
     return out
 
 
@@ -316,13 +317,19 @@ def main():
     for name, (c, s, ok) in skewed:
         lines.append(f"| `{name}` | {fmt(s['skew'], 2)} | {', '.join(str(x) for x in ok[0]['partitionEvents'])} |")
 
-    recov = [(n, v) for n, v in summary.items() if v[1]["recoverySeconds"]]
+    recov = [(n, v) for n, v in summary.items() if v[0].get("KILL_WORKER_AFTER")]
     if recov:
         lines += ["", "## Worker kill and recovery", "",
-                  "Longest time any partition's lag stopped falling after one worker was killed (SIGKILL).", "",
-                  "| Scenario | Longest partition stall s | Duplicates suppressed |", "|---|---|---|"]
+                  "One of two workers is killed (SIGKILL) and restarted 15 s later. *Partition stall* is the longest time any",
+                  "partition's lag stopped falling after the kill, from the lag timeline (backlog runs only: in live runs the",
+                  "timeline starts after publishing and does not cover the kill). *Max latency* is the longest any event",
+                  "waited from its Kafka append to processing.", "",
+                  "| Scenario | Workload | Partition stall s | Max latency ms | p99 ms | Duplicates suppressed | Result |",
+                  "|---|---|---|---|---|---|---|"]
         for name, (c, s, ok) in recov:
-            lines.append(f"| `{name}` | {fmt(s['recoverySeconds'], 1)} | {fmt(s['duplicates'])} |")
+            stall = fmt(s['recoverySeconds'], 1) if c["WORKLOAD"] == "backlog" else "n/a"
+            lines.append(f"| `{name}` | {c['WORKLOAD']} | {stall} | {fmt(stats([r['maxLatency'] for r in ok]))} |"
+                         f" {fmt(s['p99'])} | {fmt(s['duplicates'])} | {len(ok)} × PASS |")
 
     lines += ["", "## Top statements (first repetition of each scenario)", ""]
     for name, (c, s, ok) in summary.items():
