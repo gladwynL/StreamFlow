@@ -126,6 +126,7 @@ def run_metrics(run_dir):
         "skew": (max(counts) / (sum(counts) / len(counts))) if counts else None,
         "resources": resources(run_dir, start, end),
         "recoverySeconds": recovery(observe, run_dir),
+        "peakLag": max(((s.get("lag") or 0) for s in observe.get("timeline") or []), default=None),
     }
 
 
@@ -170,6 +171,75 @@ def svg_bars(path, title, groups, unit):
         parts.append(f'<text x="{left + w + 6:.1f}" y="{y + 15}" fill="#111">{median:,.0f} {unit}</text>')
     parts.append("</svg>")
     path.write_text("\n".join(parts))
+
+# ---- appended sections (inserted before the "Runs" table by main) ----
+
+def latest(summary, name):
+    """The newest commit's result for a scenario name (summary keys are 'name @commit')."""
+    keys = [k for k in summary if k.split(" @")[0] == name]
+    if not keys:
+        return None
+    # The newest run directory sorts last (UTC timestamp prefix).
+    keys.sort(key=lambda k: max(r["run"] for r in summary[k][2]))
+    return summary[keys[-1]]
+
+
+def max_lag(observe_runs):
+    return stats([max((s.get("lag") or 0) for s in r["timeline"]) if r.get("timeline") else None for r in observe_runs])
+
+
+def extra_sections(summary):
+    out = []
+    # Before / after the record-mode optimisation.
+    keys = sorted((k for k in summary if k.startswith("drain-record-1w-c3 @")),
+                  key=lambda k: min(r["run"] for r in summary[k][2]))
+    if len(keys) >= 2:
+        out += ["", "## Record mode before and after the single-statement effects change", "",
+                "| Commit | n | Consumer processed/s | Drain s | Statement time ms | WAL fsync time ms |",
+                "|---|---|---|---|---|---|"]
+        for k in keys:
+            c, s, ok = summary[k]
+            out.append(f"| `{k.split(' @')[1]}` | {len(ok)} | {fmt(s['consumerPerSecond'])} | {fmt(s['drainSeconds'], 1)} |"
+                       f" {fmt(s['dbStatementMs'])} | {fmt(s['walFsyncMs'])} |")
+
+    # Scaling matrix.
+    rows = []
+    for label, suffix in (("1 × 1", "1w-c1"), ("2 × 1", "2w-c1"), ("3 × 1", "3w-c1"), ("6 × 1", "6w-c1"),
+                          ("1 × 6", "1w-c6")):
+        rec, bat = latest(summary, f"scale-record-{suffix}"), latest(summary, f"scale-batch-{suffix}")
+        rows.append((label, rec, bat))
+    base_rec = rows[0][1][1]["consumerPerSecond"]["median"] if rows[0][1] else None
+    base_bat = rows[0][2][1]["consumerPerSecond"]["median"] if rows[0][2] else None
+    out += ["", "## Consumer scaling (6 partitions, backlog drain)", "",
+            "Workers × consumer threads per worker. Speed-up is relative to 1 × 1 of the same mode.", "",
+            "| Workers × threads | Record processed/s | Speed-up | Batch processed/s | Speed-up |", "|---|---|---|---|---|"]
+    chart = []
+    for label, rec, bat in rows:
+        r = rec[1]["consumerPerSecond"] if rec else None
+        b = bat[1]["consumerPerSecond"] if bat else None
+        su_r = f"{r['median'] / base_rec:.2f}×" if r and base_rec else "—"
+        su_b = f"{b['median'] / base_bat:.2f}×" if b and base_bat else "—"
+        out.append(f"| {label} | {fmt(r)} | {su_r} | {fmt(b)} | {su_b} |")
+        if r:
+            chart.append((f"record {label}", r["median"], r["min"], r["max"]))
+        if b:
+            chart.append((f"batch {label}", b["median"], b["min"], b["max"]))
+    if chart:
+        svg_bars(CHARTS / "scaling.svg", "Backlog drain throughput by workers × threads (events/s)", chart, "/s")
+        out += ["", "![Scaling](charts/scaling.svg)"]
+
+    # Latency under steady load.
+    live = sorted((k for k in summary if k.startswith("live-")), key=lambda k: (k.split("-")[1], int(k.split("-")[4].split(" ")[0])))
+    if live:
+        out += ["", "## Latency under steady load (live workload, 60 s)", "",
+                "Kafka append to start of the processing transaction, exact percentiles over every event of the run.",
+                "", "| Scenario | Offered/s | Processed/s | p50 ms | p95 ms | p99 ms | Peak lag |",
+                "|---|---|---|---|---|---|---|"]
+        for k in live:
+            c, s, ok = summary[k]
+            out.append(f"| `{k}` | {c['RATE']} | {fmt(s['consumerPerSecond'])} | {fmt(s['p50'], 1)} | {fmt(s['p95'], 1)} |"
+                       f" {fmt(s['p99'], 1)} | {fmt(stats([r['peakLag'] for r in ok]))} |")
+    return out
 
 
 def main():
@@ -268,6 +338,7 @@ def main():
                  [(n, g["median"], g["min"], g["max"]) for n, g in groups], "/s")
         lines += ["## Charts", "", "![Consumer throughput](charts/consumer-throughput.svg)", ""]
 
+    lines += extra_sections(summary) + [""]
     if failed:
         lines += ["## Runs excluded (did not reconcile as PASS)", ""]
         lines += [f"- `{r['run']}`: {r['result']}" for r in failed]
