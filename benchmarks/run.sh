@@ -128,6 +128,25 @@ stop_sampler() {
   fi
 }
 
+# Kills one worker (SIGKILL) KILL_WORKER_AFTER seconds after the workers started, optionally restarting it.
+schedule_kill() {
+  KILL_PID=""
+  if [ -n "$KILL_WORKER_AFTER" ]; then
+    (
+      sleep "$KILL_WORKER_AFTER"
+      victim=$(compose ps -q worker | head -1)
+      date +%s%3N > "$RUN_DIR/worker-killed-ms"
+      docker kill "$victim" >/dev/null
+      if [ -n "$RESTART_KILLED_AFTER" ]; then
+        sleep "$RESTART_KILLED_AFTER"
+        date +%s%3N > "$RUN_DIR/worker-restarted-ms"
+        docker start "$victim" >/dev/null
+      fi
+    ) &
+    KILL_PID=$!
+  fi
+}
+
 cleanup_run() {
   compose rm --stop --force worker api >/dev/null 2>&1 || true
   kafka_admin kafka-topics.sh --delete --topic "$BENCH_EVENTS_TOPIC" >/dev/null 2>&1 || true
@@ -209,8 +228,11 @@ for REP in $(seq 1 "$REPETITIONS"); do
   if [ "$DASHBOARD_CLIENTS" -gt 0 ]; then
     compose up --detach --no-deps --wait --wait-timeout 180 api
   fi
+  KILL_PID=""
   if [ "$WORKLOAD" = "live" ]; then
+    date +%s%3N > "$RUN_DIR/workers-started-ms"
     compose up --detach --no-deps --wait --wait-timeout 180 --scale "worker=$WORKERS" worker
+    schedule_kill
   fi
 
   sample_stats "$RUN_DIR/docker-stats.csv" &
@@ -238,22 +260,7 @@ for REP in $(seq 1 "$REPETITIONS"); do
     log "[$REP/$REPETITIONS] start $WORKERS worker(s) x $CONCURRENCY consumers ($PROCESSING_MODE)"
     date +%s%3N > "$RUN_DIR/workers-started-ms"
     compose up --detach --no-deps --wait --wait-timeout 180 --scale "worker=$WORKERS" worker
-  fi
-
-  KILL_PID=""
-  if [ -n "$KILL_WORKER_AFTER" ]; then
-    (
-      sleep "$KILL_WORKER_AFTER"
-      victim=$(compose ps -q worker | head -1)
-      date +%s%3N > "$RUN_DIR/worker-killed-ms"
-      docker kill "$victim" >/dev/null
-      if [ -n "$RESTART_KILLED_AFTER" ]; then
-        sleep "$RESTART_KILLED_AFTER"
-        date +%s%3N > "$RUN_DIR/worker-restarted-ms"
-        docker start "$victim" >/dev/null
-      fi
-    ) &
-    KILL_PID=$!
+    schedule_kill
   fi
 
   log "[$REP/$REPETITIONS] observe run $RUN_ID until drained"
