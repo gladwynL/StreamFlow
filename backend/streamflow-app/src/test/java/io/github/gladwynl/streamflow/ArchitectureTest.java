@@ -18,18 +18,22 @@ class ArchitectureTest {
     private static final String MIGRATE = "io.github.gladwynl.streamflow.migrate..";
     private static final String WORKER = "io.github.gladwynl.streamflow.worker..";
     private static final String GENERATE = "io.github.gladwynl.streamflow.generate..";
+    private static final String LOADGEN = "io.github.gladwynl.streamflow.loadgen..";
 
     @ArchTest
-    static final ArchRule apiDoesNotDependOnOtherRoles = roleIsolated(API, MIGRATE, WORKER, GENERATE);
+    static final ArchRule apiDoesNotDependOnOtherRoles = roleIsolated(API, MIGRATE, WORKER, GENERATE, LOADGEN);
 
     @ArchTest
-    static final ArchRule migrateDoesNotDependOnOtherRoles = roleIsolated(MIGRATE, API, WORKER, GENERATE);
+    static final ArchRule migrateDoesNotDependOnOtherRoles = roleIsolated(MIGRATE, API, WORKER, GENERATE, LOADGEN);
 
     @ArchTest
-    static final ArchRule workerDoesNotDependOnOtherRoles = roleIsolated(WORKER, API, MIGRATE, GENERATE);
+    static final ArchRule workerDoesNotDependOnOtherRoles = roleIsolated(WORKER, API, MIGRATE, GENERATE, LOADGEN);
 
     @ArchTest
-    static final ArchRule generateDoesNotDependOnOtherRoles = roleIsolated(GENERATE, API, MIGRATE, WORKER);
+    static final ArchRule generateDoesNotDependOnOtherRoles = roleIsolated(GENERATE, API, MIGRATE, WORKER, LOADGEN);
+
+    @ArchTest
+    static final ArchRule loadgenDoesNotDependOnOtherRoles = roleIsolated(LOADGEN, API, MIGRATE, WORKER, GENERATE);
 
     @ArchTest
     static final ArchRule sharedPackagesDoNotDependOnRoles = noClasses()
@@ -45,7 +49,7 @@ class ArchitectureTest {
                     "io.github.gladwynl.streamflow.events..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage(API, MIGRATE, WORKER, GENERATE);
+            .resideInAnyPackage(API, MIGRATE, WORKER, GENERATE, LOADGEN);
 
     /** Only processing code writes events; the API and the generator never touch the event store. */
     @ArchTest

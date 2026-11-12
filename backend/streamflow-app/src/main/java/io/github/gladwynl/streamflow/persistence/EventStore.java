@@ -102,7 +102,7 @@ public class EventStore {
                 .update();
     }
 
-    private static final String LATENCY_BOUNDS_SQL = "ARRAY["
+    static final String LATENCY_BOUNDS_SQL = "ARRAY["
             + java.util.Arrays.stream(LatencyBuckets.UPPER_BOUNDS)
                     .mapToObj(Long::toString)
                     .collect(java.util.stream.Collectors.joining(","))

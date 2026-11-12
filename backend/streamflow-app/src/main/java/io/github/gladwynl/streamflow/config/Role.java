@@ -18,7 +18,9 @@ public enum Role {
     /** Consumes, processes and persists events; reports liveness through heartbeats. */
     WORKER,
     /** One-shot job: publishes one bounded, seeded simulation run, reconciles it, then exits. */
-    GENERATE;
+    GENERATE,
+    /** One-shot benchmark job: runs one phase of a benchmark (publish, observe or dashboard load), then exits. */
+    LOADGEN;
 
     public String profile() {
         return name().toLowerCase(Locale.ROOT);
@@ -26,7 +28,7 @@ public enum Role {
 
     /** One-shot roles exit when their work is done; their exit status reports the outcome. */
     public boolean oneShot() {
-        return this == MIGRATE || this == GENERATE;
+        return this == MIGRATE || this == GENERATE || this == LOADGEN;
     }
 
     /**

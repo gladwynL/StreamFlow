@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
  * (one run from the command line) and {@code api} (runs started from the dashboard, and dead-letter replay).
  */
 @Configuration(proxyBeanMethods = false)
-@Profile({"api", "generate"})
+@Profile({"api", "generate", "loadgen"})
 class SimulationConfiguration {
 
     /** acks=all, idempotent; used for simulation runs and dead-letter replay. */

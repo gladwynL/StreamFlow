@@ -1,0 +1,8 @@
+# loadgen role: headless benchmark harness (docs/benchmarks/methodology.md). Runs one phase
+# (streamflow.loadgen.phase) against the benchmark stack, writes a JSON result and exits.
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    hikari:
+      maximum-pool-size: 2

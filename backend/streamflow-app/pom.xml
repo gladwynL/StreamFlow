@@ -94,6 +94,37 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <!-- The reliability suite again, with workers in batch processing mode (ADR-0013). -->
+                    <execution>
+                        <id>batch-mode-it</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <reportsDirectory>${project.build.directory}/failsafe-reports-batch</reportsDirectory>
+                            <summaryFile>${project.build.directory}/failsafe-reports-batch/failsafe-summary.xml</summaryFile>
+                            <systemPropertyVariables>
+                                <streamflow.it.processing-mode>BATCH</streamflow.it.processing-mode>
+                            </systemPropertyVariables>
+                            <includes>
+                                <include>**/BatchProcessingIT.java</include>
+                                <include>**/CrashRecoveryIT.java</include>
+                                <include>**/DuplicateDeliveryIT.java</include>
+                                <include>**/DatabaseOutageIT.java</include>
+                                <include>**/DeadLetterIT.java</include>
+                                <include>**/DeadLetterPublishFailureIT.java</include>
+                                <include>**/RetryIT.java</include>
+                                <include>**/ReplayIT.java</include>
+                                <include>**/ReconciliationIT.java</include>
+                                <include>**/WorkerRestartIT.java</include>
+                                <include>**/OffsetOutOfRangeIT.java</include>
+                                <include>**/GenerateRoleIT.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

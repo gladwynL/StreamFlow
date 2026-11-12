@@ -1,0 +1,82 @@
+# Benchmark overlay (docs/benchmarks/methodology.md). Used only by benchmarks/run.sh, always with its own project
+# name (streamflow-bench), env file and host ports, so it never touches the development stack's containers, volumes
+# or data. Every run uses its own bench.* topics and consumer groups, deleted afterwards.
+x-bench-names: &bench-names
+  STREAMFLOW_KAFKA_TOPICS_EVENTS_NAME: ${BENCH_EVENTS_TOPIC:-bench.unset.events}
+  STREAMFLOW_KAFKA_TOPICS_EVENTS_PARTITIONS: ${BENCH_PARTITIONS:-6}
+  STREAMFLOW_KAFKA_TOPICS_DEAD_LETTER_NAME: ${BENCH_DLT_TOPIC:-bench.unset.dlt}
+  STREAMFLOW_KAFKA_TOPICS_DEAD_LETTER_PARTITIONS: ${BENCH_PARTITIONS:-6}
+  STREAMFLOW_WORKER_CONSUMER_GROUP: ${BENCH_GROUP:-bench-unset}
+  STREAMFLOW_DEAD_LETTERS_INGESTOR_GROUP: ${BENCH_GROUP:-bench-unset}-dlt
+
+services:
+  postgres:
+    # Same tuning as compose.yaml, plus statement and I/O statistics for the measurements.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - max_connections=80
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.max=1000
+      - -c
+      - track_io_timing=on
+      - -c
+      - track_wal_io_timing=on
+
+  migrate:
+    environment:
+      <<: *bench-names
+
+  worker:
+    environment:
+      <<: *bench-names
+      STREAMFLOW_WORKER_CONCURRENCY: ${BENCH_CONCURRENCY:-3}
+      STREAMFLOW_WORKER_PROCESSING_MODE: ${BENCH_PROCESSING_MODE:-RECORD}
+      STREAMFLOW_FAULT_INJECTION_ENABLED: ${BENCH_FAULT_INJECTION:-false}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError ${BENCH_WORKER_JAVA_OPTS:-}
+    # A benchmark must observe crashes, not hide them behind restarts.
+    restart: "no"
+    mem_limit: ${BENCH_WORKER_MEM:-512m}
+    # Java Flight Recorder output of profiling runs (JFR=1 in the scenario).
+    volumes:
+      - ./benchmarks/jfr:/jfr
+
+  api:
+    environment:
+      <<: *bench-names
+    restart: "no"
+
+  loadgen:
+    image: streamflow-app:local
+    environment:
+      <<: *bench-names
+      SPRING_PROFILES_ACTIVE: loadgen
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/streamflow
+      SPRING_DATASOURCE_USERNAME: streamflow
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      BENCH_SCENARIO: ${BENCH_SCENARIO:-adhoc}
+      BENCH_PARTITIONS: ${BENCH_PARTITIONS:-6}
+      BENCH_WORKERS: ${BENCH_WORKERS:-1}
+      BENCH_CONCURRENCY: ${BENCH_CONCURRENCY:-3}
+      BENCH_PROCESSING_MODE: ${BENCH_PROCESSING_MODE:-RECORD}
+    volumes:
+      - ./benchmarks/results:/results
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 768m
+    restart: "no"
+    profiles: [bench]

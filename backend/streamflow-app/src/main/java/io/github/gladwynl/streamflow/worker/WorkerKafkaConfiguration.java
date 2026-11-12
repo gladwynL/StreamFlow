@@ -34,6 +34,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.BatchListenerFailedException;
 import org.springframework.kafka.listener.ConsumerAwareRebalanceListener;
 import org.springframework.kafka.listener.ConsumerRecordRecoverer;
 import org.springframework.kafka.listener.ContainerProperties.AckMode;
@@ -73,6 +74,7 @@ import org.springframework.util.backoff.FixedBackOff;
 class WorkerKafkaConfiguration {
 
     static final String EVENT_CONTAINER_FACTORY = "eventListenerContainerFactory";
+    static final String EVENT_BATCH_CONTAINER_FACTORY = "eventBatchListenerContainerFactory";
     static final String DEAD_LETTER_CONTAINER_FACTORY = "deadLetterListenerContainerFactory";
 
     private static final Logger log = LoggerFactory.getLogger(WorkerKafkaConfiguration.class);
@@ -93,26 +95,25 @@ class WorkerKafkaConfiguration {
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(config));
     }
 
-    @Bean(EVENT_CONTAINER_FACTORY)
-    ConcurrentKafkaListenerContainerFactory<String, byte[]> eventListenerContainerFactory(
-            KafkaProperties kafka,
+    /**
+     * The error handler of event processing, shared by both processing modes. In batch mode the listener throws
+     * {@code BatchListenerFailedException} with the index of the failed record; the handler then commits only the
+     * offsets before it and applies the same classification, retries and dead-lettering to that record.
+     */
+    @Bean
+    ClassifiedErrorHandler eventErrorHandler(
             StreamflowProperties properties,
             TopicCatalog topics,
             KafkaTemplate<String, byte[]> deadLetterTemplate,
             CrashInjector crashInjector,
             WorkerMetrics metrics) {
-        ConcurrentKafkaListenerContainerFactory<String, byte[]> factory =
-                containerFactory(kafka, properties.worker().maxPollRecords(), metrics);
-        factory.setConcurrency(properties.worker().concurrency());
-        factory.getContainerProperties().setClientId("streamflow-worker");
-        // Exposes the per-assignment delivery attempt to the listener (used by fault injection).
-        factory.getContainerProperties().setDeliveryAttemptHeader(true);
-
         AtomicReference<DefaultErrorHandler> handlerRef = new AtomicReference<>();
         DeadLetterPublishingRecoverer publisher =
                 deadLetterPublisher(deadLetterTemplate, topics.deadLetter().name(), handlerRef);
         ConsumerRecordRecoverer recoverer = (record, failure) -> {
-            publisher.accept(record, failure);
+            // In batch mode the failure arrives wrapped in BatchListenerFailedException; the dead letter records
+            // the actual cause (exception class and message), as in record mode.
+            publisher.accept(record, unwrapBatchFailure(failure));
             metrics.deadLettered(FailureClassifier.classify(failure));
             crashInjector.afterDeadLetterPublished(record);
         };
@@ -123,7 +124,39 @@ class WorkerKafkaConfiguration {
         handler.setResetStateOnExceptionChange(true);
         handler.setRetryListeners(new MetricsRetryListener(metrics));
         handlerRef.set(handler);
-        factory.setCommonErrorHandler(handler);
+        return handler;
+    }
+
+    /** Record mode (the reference): one record per listener call, one transaction per record. */
+    @Bean(EVENT_CONTAINER_FACTORY)
+    ConcurrentKafkaListenerContainerFactory<String, byte[]> eventListenerContainerFactory(
+            KafkaProperties kafka,
+            StreamflowProperties properties,
+            ClassifiedErrorHandler eventErrorHandler,
+            WorkerMetrics metrics) {
+        ConcurrentKafkaListenerContainerFactory<String, byte[]> factory =
+                containerFactory(kafka, properties.worker().maxPollRecords(), metrics);
+        factory.setConcurrency(properties.worker().concurrency());
+        factory.getContainerProperties().setClientId("streamflow-worker");
+        // Exposes the per-assignment delivery attempt to the listener (used by fault injection).
+        factory.getContainerProperties().setDeliveryAttemptHeader(true);
+        factory.setCommonErrorHandler(eventErrorHandler);
+        return factory;
+    }
+
+    /** Batch mode (ADR-0013): the whole poll batch per listener call; same consumer settings and error handler. */
+    @Bean(EVENT_BATCH_CONTAINER_FACTORY)
+    ConcurrentKafkaListenerContainerFactory<String, byte[]> eventBatchListenerContainerFactory(
+            KafkaProperties kafka,
+            StreamflowProperties properties,
+            ClassifiedErrorHandler eventErrorHandler,
+            WorkerMetrics metrics) {
+        ConcurrentKafkaListenerContainerFactory<String, byte[]> factory =
+                containerFactory(kafka, properties.worker().maxPollRecords(), metrics);
+        factory.setConcurrency(properties.worker().concurrency());
+        factory.getContainerProperties().setClientId("streamflow-worker");
+        factory.setBatchListener(true);
+        factory.setCommonErrorHandler(eventErrorHandler);
         return factory;
     }
 
@@ -211,6 +244,15 @@ class WorkerKafkaConfiguration {
         return publisher;
     }
 
+    static Exception unwrapBatchFailure(Exception failure) {
+        for (Throwable t = failure; t != null; t = t.getCause() == t ? null : t.getCause()) {
+            if (t instanceof BatchListenerFailedException batch && batch.getCause() instanceof Exception cause) {
+                return cause;
+            }
+        }
+        return failure;
+    }
+
     static BackOff backOff(FailureCategory category, Retry retry) {
         return switch (category) {
             case BAD_RECORD -> new FixedBackOff(0, 0);
@@ -242,6 +284,18 @@ class WorkerKafkaConfiguration {
             super(recoverer);
             this.metrics = metrics;
         }
+
+        /**
+         * Keeps failed-record state across successful batches. In batch mode the container clears the error
+         * handler's thread state after the first successful batch that follows a failed one (spring-kafka 4.1.2,
+         * {@code ListenerConsumer.doInvokeBatchListener}); that batch may hold only other partitions' records, so a
+         * record still being retried would restart its attempt count and could exceed the transient retry limit.
+         * Record listeners never clear it before the consumer thread ends. The state stays bounded: one entry per
+         * partition, replaced when another record of the partition fails, removed when the record is recovered.
+         * Verified by RetryIT in batch mode (docs/verification/spring-kafka-behavior.md).
+         */
+        @Override
+        public void clearThreadState() {}
 
         @Override
         public void handleOtherException(

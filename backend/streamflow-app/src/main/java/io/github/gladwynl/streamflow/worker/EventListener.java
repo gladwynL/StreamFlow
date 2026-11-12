@@ -3,15 +3,17 @@ package io.github.gladwynl.streamflow.worker;
 import io.github.gladwynl.streamflow.processing.EventProcessor;
 import io.github.gladwynl.streamflow.processing.ProcessingResult;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
-/** Feeds each record of the event topic to the {@link EventProcessor}. */
+/** Record mode: feeds each record of the event topic to the {@link EventProcessor}. */
 @Component
 @Profile("worker")
+@ConditionalOnProperty(name = "streamflow.worker.processing-mode", havingValue = "RECORD", matchIfMissing = true)
 class EventListener {
 
     static final String LISTENER_ID = "event-processor";

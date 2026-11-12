@@ -31,3 +31,8 @@ Thumbs.db
 # Logs and scratch
 *.log
 logs/
+
+# Benchmarks: local env file (generated password) and large profiler recordings
+benchmarks/.bench.env
+benchmarks/results/**/*.jfr
+benchmarks/jfr/

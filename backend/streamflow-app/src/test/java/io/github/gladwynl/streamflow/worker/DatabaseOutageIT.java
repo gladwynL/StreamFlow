@@ -39,7 +39,11 @@ class DatabaseOutageIT {
                 // its partitions, so any rebalance counted below happened during the outage.
                 DeadLetterIT.awaitAssignment(worker);
                 double rebalancesBefore = metrics.rebalances();
-                await().atMost(Duration.ofSeconds(60)).until(() -> metrics.processed.count() >= 1_000);
+                // Pause as soon as processing is under way, so most of the run is still ahead in either processing
+                // mode (batch mode drains thousands of events per second).
+                await().atMost(Duration.ofSeconds(60))
+                        .pollInterval(Duration.ofMillis(20))
+                        .until(() -> metrics.processed.count() >= 1);
 
                 IntegrationTestInfrastructure.pausePostgres();
                 try {

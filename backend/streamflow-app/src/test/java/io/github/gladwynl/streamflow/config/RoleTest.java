@@ -39,7 +39,7 @@ class RoleTest {
 
     @Test
     void onlyMigrateAndGenerateAreOneShot() {
-        assertThat(Role.values()).filteredOn(Role::oneShot).containsExactly(Role.MIGRATE, Role.GENERATE);
+        assertThat(Role.values()).filteredOn(Role::oneShot).containsExactly(Role.MIGRATE, Role.GENERATE, Role.LOADGEN);
     }
 
     private static MockEnvironment environment(String... profiles) {

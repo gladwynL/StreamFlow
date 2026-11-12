@@ -72,7 +72,10 @@ public final class EventContentGenerator {
 
     private GeneratedEvent nextCandidate(long sequence) {
         while (true) {
-            int user = random.nextInt(spec.users());
+            // No extra draw without a hot user, so uniform runs keep their content hash.
+            int user = spec.hotUserPercent() > 0 && random.nextInt(100) < spec.hotUserPercent()
+                    ? 0
+                    : random.nextInt(spec.users());
             String userId = "u-%06d".formatted(user);
             Session session = sessions.get(user);
             if (session == null) {

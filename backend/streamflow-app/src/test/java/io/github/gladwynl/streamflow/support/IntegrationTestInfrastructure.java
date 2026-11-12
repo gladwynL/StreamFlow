@@ -32,6 +32,8 @@ import org.testcontainers.utility.DockerImageName;
  */
 public final class IntegrationTestInfrastructure {
 
+    public static final String PROCESSING_MODE = "streamflow.it.processing-mode";
+
     private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
                     DockerImageName.parse(TestImages.POSTGRES))
             .withDatabaseName("streamflow")
@@ -93,6 +95,7 @@ public final class IntegrationTestInfrastructure {
         List<String> args = new ArrayList<>(pipeline.arguments());
         args.add("--server.port=0");
         args.add("--streamflow.worker.heartbeat-interval=1s");
+        args.addAll(processingModeArgument(extraArguments));
         args.addAll(List.of(extraArguments));
         return runRole("worker", args);
     }
@@ -104,6 +107,23 @@ public final class IntegrationTestInfrastructure {
         args.add("--management.server.port=0");
         args.addAll(List.of(extraArguments));
         return runRole("api", args);
+    }
+
+    /**
+     * The worker processing mode of this test run: RECORD unless the system property {@value #PROCESSING_MODE} is set
+     * (the {@code batch-mode-it} failsafe execution reruns the reliability tests with BATCH).
+     */
+    public static String processingMode() {
+        return System.getProperty(PROCESSING_MODE, "RECORD");
+    }
+
+    /** The run's processing mode, unless the test chose one itself (a repeated argument would be ambiguous). */
+    private static List<String> processingModeArgument(String... extraArguments) {
+        String key = "--streamflow.worker.processing-mode=";
+        if (java.util.Arrays.stream(extraArguments).anyMatch(a -> a.startsWith(key))) {
+            return List.of();
+        }
+        return List.of(key + processingMode());
     }
 
     /** Runs the generate role on the pipeline; it returns once the run has been published and reconciled. */
@@ -119,6 +139,7 @@ public final class IntegrationTestInfrastructure {
      */
     public static List<String> workerProcessCommand(Pipeline pipeline, String... extraArguments) {
         List<String> args = new ArrayList<>(List.of("--server.port=0"));
+        args.addAll(processingModeArgument(extraArguments));
         args.addAll(List.of(extraArguments));
         return processCommand("worker", pipeline, args);
     }

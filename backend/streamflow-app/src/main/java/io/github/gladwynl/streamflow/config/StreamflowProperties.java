@@ -17,7 +17,50 @@ public record StreamflowProperties(
         @DefaultValue CrashTest crashTest,
         @DefaultValue FaultInjection faultInjection,
         @DefaultValue DeadLetters deadLetters,
-        @DefaultValue Api api) {
+        @DefaultValue Api api,
+        @DefaultValue Loadgen loadgen) {
+
+    /**
+     * The {@code loadgen} benchmark role (docs/benchmarks). Each invocation runs one phase and writes a JSON result.
+     *
+     * @param phase PUBLISH (publish one run and record producer results), OBSERVE (wait for the run to drain, then
+     *     record consumer, latency, partition and database measurements and reconcile) or DASHBOARD (hold
+     *     {@code dashboardClients} live-feed connections open for {@code dashboardDuration})
+     * @param ratePerSecond offered rate; 100,000 (the maximum) publishes as fast as the producer can
+     * @param hotUserPercent share of events (0-100) for one hot user, to skew partitions
+     * @param runId the run to observe (OBSERVE)
+     * @param resultFile where the JSON result is written
+     */
+    public record Loadgen(
+            @DefaultValue("PUBLISH") LoadgenPhase phase,
+            @DefaultValue("adhoc") String scenario,
+            @DefaultValue("1") long seed,
+            @DefaultValue("60000") long events,
+            @DefaultValue("100000") int ratePerSecond,
+            @DefaultValue("10000") int users,
+            @DefaultValue("0") int hotUserPercent,
+            String runId,
+            @DefaultValue("/results/result.json") String resultFile,
+            @DefaultValue("900s") Duration drainTimeout,
+            @DefaultValue("1s") Duration sampleInterval,
+            @DefaultValue("0") int dashboardClients,
+            @DefaultValue("ws://api:8080/ws/v1/live") String dashboardUrl,
+            @DefaultValue("120s") Duration dashboardDuration) {}
+
+    /**
+     * RECORD: one database transaction per record (the reference mode). BATCH: one transaction per poll batch with a
+     * record-by-record fallback on failure (ADR-0013).
+     */
+    public enum ProcessingMode {
+        RECORD,
+        BATCH
+    }
+
+    public enum LoadgenPhase {
+        PUBLISH,
+        OBSERVE,
+        DASHBOARD
+    }
 
     /**
      * Fault-injection scenarios (table {@code fault_scenarios}); see {@code FaultInjector}.
@@ -87,7 +130,8 @@ public record StreamflowProperties(
             @DefaultValue("streamflow-processor") String consumerGroup,
             @DefaultValue("3") int concurrency,
             @DefaultValue("500") int maxPollRecords,
-            @DefaultValue Retry retry) {
+            @DefaultValue Retry retry,
+            @DefaultValue("RECORD") ProcessingMode processingMode) {
 
         /** A worker counts as live if its last heartbeat is newer than three heartbeat intervals. */
         public Duration liveThreshold() {
