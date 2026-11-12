@@ -218,6 +218,8 @@ for REP in $(seq 1 "$REPETITIONS"); do
   fi
   RUN_DIR="$OUT_ROOT/r$REP"
   mkdir -p "$RUN_DIR"
+  # The loadgen container runs as UID 10001 and writes its results into this bind-mounted directory.
+  chmod a+rwx "$OUT_ROOT" "$RUN_DIR" 2>/dev/null || true
   STATS_PID=""
   trap 'stop_sampler; cleanup_run' EXIT
 

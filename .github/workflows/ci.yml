@@ -134,7 +134,8 @@ jobs:
         run: |
           mkdir -p benchmarks/results benchmarks/jfr
           chmod 777 benchmarks/results benchmarks/jfr
-          BENCH_MIN_HEADROOM_GB=2 benchmarks/run.sh benchmarks/scenarios/smoke.env 1
+          BENCH_MIN_HEADROOM_GB=2 benchmarks/run.sh benchmarks/scenarios/smoke.env 1 || {
+            tail -n 40 benchmarks/results/*-smoke/r1/*.log; exit 1; }
           python3 benchmarks/analyze.py benchmarks/results /tmp/bench-results.md
           grep -q "smoke" /tmp/bench-results.md
       - name: Stop the benchmark stack
