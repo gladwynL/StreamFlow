@@ -35,7 +35,7 @@ one worker. All values come from the backend.</sub>
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph Producers
         SIM["api: simulations<br/>(bounded, seeded)"]
         GEN["generate role<br/>(one-shot run)"]
