@@ -136,6 +136,7 @@ throwaway operator key and lets the worker run the predefined fault scenarios (t
 letters):
 
 ```bash
+export COMPOSE_PROJECT_NAME=streamflow-e2e        # keeps the e2e stack and its volumes apart from your data
 export STREAMFLOW_E2E_OPERATOR_KEY=$(openssl rand -hex 16)
 docker compose -f compose.yaml -f compose.e2e.yaml --profile app up -d --build --wait
 cd frontend
@@ -143,10 +144,12 @@ npx playwright install chromium     # once
 npm run e2e
 ```
 
-PowerShell: `$env:STREAMFLOW_E2E_OPERATOR_KEY = [guid]::NewGuid().ToString('N')`. The suite covers every section
+PowerShell: `$env:COMPOSE_PROJECT_NAME = 'streamflow-e2e'; $env:STREAMFLOW_E2E_OPERATOR_KEY = [guid]::NewGuid().ToString('N')`. The suite covers every section
 (axe accessibility scan, no horizontal scroll at 375, 768 and 1440 px), keyboard navigation, reduced motion, the live
 feed cadence and reconnection, a seeded run that must reconcile as PASS, and dead-letter replay and discard. Use `E2E_BASE_URL` to target another address. Stop the stack afterwards
-with the same `-f` options and `down --volumes`.
+with the same `-f` options and `down --volumes`, **with `COMPOSE_PROJECT_NAME=streamflow-e2e` still set**: without
+it, Compose addresses the default `streamflow` project and `--volumes` would delete your development data. (CI runs
+in a fresh checkout, where this does not matter.)
 
 ## Memory on this laptop
 
@@ -287,6 +290,19 @@ on disk, a backlog of about 7.8 million unread events per partition reaches 80 %
 - The benchmark stack (`streamflow-bench`) has its own volumes; stop it with the command in
   [`docs/benchmarks/methodology.md`](benchmarks/methodology.md). Its data is benchmark-only.
 - Never use `docker system prune --volumes` here: it would delete the development data too.
+
+### A second checkout on the same machine
+
+`compose.yaml` names its project `streamflow`, so every checkout addresses the same containers and **the same
+volumes**. A second clone with a new `POSTGRES_PASSWORD` therefore fails at `migrate` with "password authentication
+failed" against the existing database (nothing is changed). Give the second checkout its own project, with its own
+containers and volumes, by adding to its `.env`:
+
+```bash
+COMPOSE_PROJECT_NAME=streamflow-walkthrough
+```
+
+Only one stack can run at a time, because the host ports are the same (change `*_HOST_PORT` in `.env` to run both).
 
 ## Troubleshooting
 
