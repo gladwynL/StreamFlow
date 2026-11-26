@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.2</version>
+        <version>4.2.0</version>
         <relativePath/>
     </parent>
 
@@ -33,7 +33,7 @@
     <properties>
         <java.version>21</java.version>
         <archunit.version>1.5.1</archunit.version>
-        <spotless-maven-plugin.version>3.11.0</spotless-maven-plugin.version>
+        <spotless-maven-plugin.version>3.12.0</spotless-maven-plugin.version>
         <palantir-java-format.version>2.103.0</palantir-java-format.version>
         <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
     </properties>
